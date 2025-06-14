@@ -11,6 +11,9 @@
             font-family: Arial, sans-serif; /* Font chữ dễ đọc hơn */
             margin: 0; /* Loại bỏ lề mặc định của body */
             padding: 20px; /* Thêm padding tổng thể cho nội dung */
+            display: flex; /* Dùng flexbox để footer dính dưới cùng */
+            flex-direction: column; /* Xếp các mục theo cột */
+            min-height: 100vh; /* Đảm bảo body chiếm ít nhất toàn bộ chiều cao viewport */
         }
 
         header {
@@ -83,6 +86,7 @@
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
             margin-top: 20px;
+            flex-grow: 1; /* Cho phép container này mở rộng để đẩy footer xuống */
         }
 
         h1 {
@@ -131,6 +135,15 @@
         /* Kiểu chữ cho ô trống */
         span[style*='color:#aaa'] {
             color: #888888 !important; /* Đảm bảo màu xám nhạt hiển thị trên nền tối */
+        }
+
+        footer {
+            margin-top: 40px; /* Khoảng cách từ nội dung đến footer */
+            text-align: center;
+            padding: 20px;
+            background-color: #1a1a1a; /* Nền footer giống auth-section */
+            color: #aaaaaa; /* Chữ xám nhạt */
+            border-top: 1px solid #333333; /* Đường viền trên footer */
         }
     </style>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
@@ -240,6 +253,11 @@
             <tbody id="schedule-body-khoi10"></tbody>
         </table>
     </div>
+
+    <footer>
+        <p>&copy; 2025 Aris. Bản quyền thuộc về trung tâm Aris và Lê Gia Minh.</p>
+        <p>Liên hệ: aris.edu@gmail.com | Điện thoại: 0989 272 184</p>
+    </footer>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>

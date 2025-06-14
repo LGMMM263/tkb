@@ -24,19 +24,18 @@ const authSection = document.getElementById("auth-section");
 const scheduleContainer = document.getElementById("schedule-container");
 
 const periodsMorning = [
-    { time: "8h-10h" }, // Đã thay đổi "8h-10h" thành ""
-    { time: "8h-11h" }, // Đã bỏ 'label: "Tiết 2"'
-    { time: "8h-9h30" }, // Đã bỏ 'label: "Tiết 3"'
-    { time: "08h30-11h" }, // Đã bỏ 'label: "Tiết 4"'
+    { time: "8h-10h" },
+    { time: "8h-11h" },
+    { time: "8h-9h30" },
+    { time: "08h30-11h" },
     { time: "8h30-11h30" },
     { time: "9h45-11h15" }
-
 ];
 const periodsAfternoon = [
-    { time: "14h - 15h30" }, // Đã thay đổi "8h-10h" thành ""
-    { time: "14h - 16h" }, // Đã bỏ 'label: "Tiết 2"'
-    { time: "14h-16h30" }, // Đã bỏ 'label: "Tiết 3"'
-    { time: "14h-17h" }, // Đã bỏ 'label: "Tiết 4"'
+    { time: "14h - 15h30" },
+    { time: "14h - 16h" },
+    { time: "14h-16h30" },
+    { time: "14h-17h" },
     { time: "14h30-16h" },
     { time: "15h-17h30" },
     { time: "15h30-17h" },
@@ -51,7 +50,6 @@ const periodsAfternoon = [
     { time: "17h30-19h" },
     { time: "17h30-20h" },
     { time: "17h30-19h30" },
-
 ];
 const periodsEvening = [
     { time: "18h-19h30" },
@@ -78,13 +76,21 @@ btnLogin.addEventListener("click", () => {
 btnSignup.addEventListener("click", async () => {
     try {
         const userCredential = await auth.createUserWithEmailAndPassword(loginEmail.value, loginPassword.value);
+        // Sau khi tạo người dùng thành công trong Firebase Authentication,
+        // thông tin người dùng (UID, email) sẽ có trong userCredential.user.
+        // Bạn sẽ thấy tài khoản này trong Firebase Console -> Authentication -> Users.
+
+        // Tiếp theo, lưu thông tin người dùng vào Firestore để quản lý vai trò.
         await db.collection('users').doc(userCredential.user.uid).set({
             email: userCredential.user.email,
             role: 'viewer'
         });
         alert("Đăng ký thành công!");
     } catch (error) {
+        // Đây là nơi bạn cần kiểm tra lỗi nếu tài khoản không hiện trên Firebase.
+        // Mở Console (F12) của trình duyệt để xem lỗi chi tiết hơn nếu có.
         authError.textContent = getAuthErrorMessage(error.code);
+        console.error("Lỗi đăng ký:", error.code, error.message); // In lỗi chi tiết ra console
     }
 });
 
@@ -106,13 +112,15 @@ auth.onAuthStateChanged(async (user) => {
             if (doc.exists) {
                 userRole = doc.data().role || 'viewer';
             } else {
+                // Nếu người dùng đăng nhập mà không có record trong Firestore (ví dụ: tạo thủ công trong Firebase Auth)
+                // thì tạo record mới với vai trò viewer mặc định.
                 await db.collection('users').doc(user.uid).set({
                     email: user.email,
                     role: 'viewer'
                 });
             }
         } catch (err) {
-            console.error("Lỗi khi lấy vai trò:", err);
+            console.error("Lỗi khi lấy hoặc tạo vai trò người dùng:", err);
         }
         renderAllSchedules(userRole);
     } else {
@@ -131,10 +139,11 @@ function getAuthErrorMessage(code) {
     switch (code) {
         case 'auth/email-already-in-use': return 'Email đã được sử dụng.';
         case 'auth/invalid-email': return 'Email không hợp lệ.';
-        case 'auth/weak-password': return 'Mật khẩu quá yếu.';
+        case 'auth/weak-password': return 'Mật khẩu quá yếu (tối thiểu 6 ký tự).'; // Thêm gợi ý về độ dài mật khẩu
         case 'auth/user-not-found': return 'Người dùng không tồn tại.';
         case 'auth/wrong-password': return 'Sai mật khẩu.';
-        default: return 'Lỗi xác thực.';
+        case 'auth/network-request-failed': return 'Lỗi mạng. Vui lòng kiểm tra kết nối internet.'; // Thêm lỗi mạng
+        default: return 'Lỗi xác thực không xác định. Vui lòng thử lại.'; // Thông báo lỗi chung rõ ràng hơn
     }
 }
 
@@ -170,13 +179,13 @@ function renderSchedule(bodyId, khoiId, role) {
         tbody.innerHTML = "";
         const groups = [periodsMorning, periodsAfternoon, periodsEvening];
         const titles = ["Buổi Sáng", "Buổi Chiều", "Buổi Tối"];
-        const days = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "CN"];
+        // const days = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "CN"]; // Đã bỏ vì giờ tiêu đề ngày nằm trong HTML thead
+
         let idx = 0;
         groups.forEach((group, gIdx) => {
             tbody.innerHTML += `<tr><td colspan="${COLS + 1}" class="section-title">${titles[gIdx]}</td></tr>`;
-            tbody.innerHTML += `<tr><th>Tiết</th>${days.map(d => `<th>${d}</th>`).join('')}</tr>`;
+            // tbody.innerHTML += `<tr><th>Tiết</th>${days.map(d => `<th>${d}</th>`).join('')}</tr>`; // Dòng này sẽ bị xóa để tránh lặp lại header ngày
             group.forEach(p => {
-                // Đã thêm điều kiện để hiển thị nhãn (label) nếu có
                 let row = `<tr><td><strong>${p.label ? p.label : ''}</strong><br><small>${p.time}</small></td>`;
                 for (let d = 0; d < COLS; d++) {
                     const lessons = data[idx]?.[`day${d}`] || [];
