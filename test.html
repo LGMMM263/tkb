@@ -172,19 +172,6 @@
             color: #ffffff;
         }
 
-        /* Loại bỏ CSS cho #period-select vì đã thay bằng checkboxes */
-        /* #period-select {
-            width: 100%;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #555555;
-            background-color: #3a3a3a;
-            color: #ffffff;
-            font-size: 1em;
-            box-sizing: border-box;
-            min-height: 120px;
-        } */
-
         #period-checkboxes, #day-checkboxes {
             display: flex;
             flex-wrap: wrap; /* Cho phép các checkbox xuống dòng */
@@ -211,10 +198,14 @@
             cursor: pointer; /* Biến con trỏ thành pointer khi hover label */
         }
 
-        #btn-filter {
-            display: block; /* Đặt nút trên một dòng riêng */
-            width: fit-content; /* Tự động điều chỉnh chiều rộng theo nội dung */
-            margin: 20px auto 0 auto; /* Canh giữa nút */
+        .filter-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px; /* Khoảng cách giữa các nút lọc */
+            margin-top: 20px;
+        }
+
+        .filter-buttons button, #btn-filter {
             padding: 10px 25px;
             border-radius: 5px;
             border: none;
@@ -225,8 +216,22 @@
             transition: background-color 0.2s ease;
         }
 
-        #btn-filter:hover {
+        .filter-buttons button:hover, #btn-filter:hover {
             background-color: #0056b3;
+        }
+
+        .filter-buttons .clear-button {
+            background-color: #6c757d; /* Màu xám cho nút xóa */
+        }
+
+        .filter-buttons .clear-button:hover {
+            background-color: #5a6268;
+        }
+
+        #btn-filter {
+            display: block; /* Đặt nút trên một dòng riêng */
+            width: fit-content; /* Tự động điều chỉnh chiều rộng theo nội dung */
+            margin: 20px auto 0 auto; /* Canh giữa nút */
         }
 
         #filter-results {
@@ -289,12 +294,20 @@
                 <label>Chọn khung giờ:</label>
                 <div id="period-checkboxes">
                     </div>
+                <div class="filter-buttons">
+                    <button id="btn-clear-periods" class="clear-button">Bỏ chọn tất cả khung giờ</button>
+                    <button id="btn-select-all-periods">Chọn tất cả khung giờ</button>
+                </div>
             </div>
 
             <div class="filter-group">
                 <label>Chọn ngày:</label>
                 <div id="day-checkboxes">
                     </div>
+                <div class="filter-buttons">
+                    <button id="btn-clear-days" class="clear-button">Bỏ chọn tất cả ngày</button>
+                    <button id="btn-select-all-days">Chọn tất cả ngày</button>
+                </div>
             </div>
             
             <button id="btn-filter">Lọc số lớp</button>

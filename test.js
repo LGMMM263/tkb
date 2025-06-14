@@ -24,12 +24,19 @@ const authSection = document.getElementById("auth-section");
 const scheduleContainer = document.getElementById("schedule-container");
 
 // DOM elements cho bộ lọc mới
-const periodCheckboxesDiv = document.getElementById("period-checkboxes"); // New DOM element for period checkboxes
-const dayCheckboxesDiv = document.getElementById("day-checkboxes"); // New DOM element for day checkboxes
+const periodCheckboxesDiv = document.getElementById("period-checkboxes");
+const dayCheckboxesDiv = document.getElementById("day-checkboxes");
 const btnFilter = document.getElementById("btn-filter");
 const filterResultsDiv = document.getElementById("filter-results");
 const totalClassesCountSpan = document.getElementById("total-classes-count");
 const classesByKhoiList = document.getElementById("classes-by-khoi-list");
+
+// New DOM elements for clear/select all buttons
+const btnClearPeriods = document.getElementById("btn-clear-periods");
+const btnSelectAllPeriods = document.getElementById("btn-select-all-periods");
+const btnClearDays = document.getElementById("btn-clear-days");
+const btnSelectAllDays = document.getElementById("btn-select-all-days");
+
 
 // Định nghĩa các khung giờ (đã bỏ label)
 const periodsMorning = [
@@ -76,7 +83,7 @@ const days = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", 
 const scheduleUnsubscribeFunctions = {};
 
 // Hàm để điền các checkbox khung giờ
-function populatePeriodCheckboxes() {
+function populatePeriodCheckboxes(checkAll = true) {
     periodCheckboxesDiv.innerHTML = ''; // Xóa các checkbox cũ
     periods.forEach((p, index) => {
         const div = document.createElement('div');
@@ -84,7 +91,7 @@ function populatePeriodCheckboxes() {
         input.type = 'checkbox';
         input.id = `period-${index}`;
         input.value = p.time; // Giá trị là chuỗi thời gian
-        input.checked = true; // Mặc định chọn tất cả các khung giờ
+        input.checked = checkAll; // Mặc định chọn tất cả các khung giờ hoặc không chọn
 
         const label = document.createElement('label');
         label.htmlFor = `period-${index}`;
@@ -97,7 +104,7 @@ function populatePeriodCheckboxes() {
 }
 
 // Hàm để điền các checkbox ngày
-function populateDayCheckboxes() {
+function populateDayCheckboxes(checkAll = true) {
     dayCheckboxesDiv.innerHTML = ''; // Xóa các checkbox cũ
     days.forEach((day, index) => {
         const div = document.createElement('div');
@@ -105,7 +112,7 @@ function populateDayCheckboxes() {
         input.type = 'checkbox';
         input.id = `day-${index}`;
         input.value = index; // Giá trị là chỉ số ngày (0 cho T2, 1 cho T3, ...)
-        input.checked = true; // Mặc định chọn tất cả các ngày
+        input.checked = checkAll; // Mặc định chọn tất cả các ngày hoặc không chọn
 
         const label = document.createElement('label');
         label.htmlFor = `day-${index}`;
@@ -117,6 +124,13 @@ function populateDayCheckboxes() {
     });
 }
 
+// Hàm chung để xử lý chọn/bỏ chọn tất cả checkboxes trong một container
+function setAllCheckboxes(container, checked) {
+    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = checked;
+    });
+}
 
 // Xác thực
 btnLogin.addEventListener("click", () => {
@@ -170,8 +184,8 @@ auth.onAuthStateChanged(async (user) => {
             userRole = 'viewer'; // Đảm bảo vai trò là 'viewer' nếu có lỗi
         }
         renderAllSchedules(userRole);
-        populatePeriodCheckboxes(); // Gọi hàm mới để điền các checkbox khung giờ
-        populateDayCheckboxes(); // Điền các checkbox ngày
+        populatePeriodCheckboxes(); // Gọi hàm mới để điền các checkbox khung giờ (mặc định chọn tất cả)
+        populateDayCheckboxes(); // Điền các checkbox ngày (mặc định chọn tất cả)
 
         filterResultsDiv.style.display = 'none';
 
@@ -408,4 +422,22 @@ btnFilter.addEventListener("click", async () => {
         }
     }
     filterResultsDiv.style.display = 'block'; // Hiển thị khu vực kết quả
+});
+
+
+// Event listeners cho các nút chọn/bỏ chọn tất cả
+btnClearPeriods.addEventListener("click", () => {
+    setAllCheckboxes(periodCheckboxesDiv, false);
+});
+
+btnSelectAllPeriods.addEventListener("click", () => {
+    setAllCheckboxes(periodCheckboxesDiv, true);
+});
+
+btnClearDays.addEventListener("click", () => {
+    setAllCheckboxes(dayCheckboxesDiv, false);
+});
+
+btnSelectAllDays.addEventListener("click", () => {
+    setAllCheckboxes(dayCheckboxesDiv, true);
 });
