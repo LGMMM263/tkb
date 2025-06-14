@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thời Khóa Biểu Aris</title>
+    <style>
+        body {
+            background-color: #000000; /* Màu nền đen tuyền */
+            color: #ffffff; /* Màu chữ trắng để dễ đọc */
+            font-family: Arial, sans-serif; /* Font chữ dễ đọc hơn */
+            margin: 0; /* Loại bỏ lề mặc định của body */
+            padding: 20px; /* Thêm padding tổng thể cho nội dung */
+        }
+
+        header {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+
+        #btn-logout {
+            background-color: #dc3545; /* Màu đỏ cho nút đăng xuất */
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #btn-logout:hover {
+            background-color: #c82333;
+        }
+
+        #auth-section {
+            background-color: #1a1a1a; /* Nền xám đậm cho phần đăng nhập */
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5); /* Đổ bóng nhẹ */
+            max-width: 400px;
+            margin: 50px auto; /* Canh giữa form */
+            text-align: center;
+        }
+
+        #auth-title {
+            color: #ffffff;
+            margin-bottom: 20px;
+        }
+
+        #login-form input {
+            width: calc(100% - 20px); /* Đảm bảo input không tràn ra ngoài */
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #555555;
+            border-radius: 4px;
+            background-color: #333333; /* Nền input tối */
+            color: #ffffff; /* Chữ input trắng */
+        }
+
+        #login-form button {
+            background-color: #007bff; /* Màu xanh cho nút đăng nhập/đăng ký */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        #login-form button:hover {
+            background-color: #0056b3;
+        }
+
+        #auth-error {
+            color: #ff6666; /* Màu lỗi đỏ sáng hơn */
+            margin-top: 10px;
+        }
+
+        #user-info p {
+            color: #ffffff;
+        }
+
+        #schedule-container {
+            background-color: #1a1a1a; /* Nền xám đậm cho container thời khóa biểu */
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            margin-top: 20px;
+        }
+
+        h1 {
+            color: #add8e6; /* Màu xanh nhạt cho tiêu đề khối */
+            text-align: center;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            background-color: #2b2b2b; /* Nền bảng hơi sáng hơn container */
+        }
+
+        th, td {
+            border: 1px solid #444444; /* Viền bảng xám đậm */
+            padding: 12px;
+            text-align: center;
+            color: #ffffff;
+        }
+
+        th {
+            background-color: #3a3a3a; /* Nền tiêu đề cột bảng */
+            color: #f8f9fa; /* Chữ trắng hơn */
+        }
+
+        tr:nth-child(even) {
+            background-color: #333333; /* Màu xen kẽ cho hàng */
+        }
+
+        .section-title {
+            background-color: #444444; /* Nền cho các tiêu đề buổi (Sáng, Chiều, Tối) */
+            color: #add8e6; /* Màu xanh nhạt */
+            font-weight: bold;
+            font-size: 1.1em;
+            padding: 15px;
+        }
+
+        /* Kiểu chữ nhỏ cho giáo viên */
+        small {
+            color: #cccccc;
+        }
+
+        /* Kiểu chữ cho ô trống */
+        span[style*='color:#aaa'] {
+            color: #888888 !important; /* Đảm bảo màu xám nhạt hiển thị trên nền tối */
+        }
+    </style>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+</head>
+<body>
+    <header>
+        <button id="btn-logout" style="display: none;">Đăng xuất</button>
+    </header>
+
+    <div id="auth-section">
+        <h2 id="auth-title">Đăng nhập / Đăng ký</h2>
+        <div id="login-form">
+            <input type="email" id="login-email" placeholder="Email">
+            <input type="password" id="login-password" placeholder="Mật khẩu">
+            <button id="btn-login">Đăng nhập</button>
+            <button id="btn-signup">Đăng ký</button>
+            <p id="auth-error" style="color: red;"></p>
+        </div>
+        <div id="user-info" style="display: none;">
+            <p>Chào mừng, <span id="user-email"></span>!</p>
+        </div>
+    </div>
+
+    <div id="schedule-container" style="display: none;">
+        <h1>Thời Khóa Biểu Khối 6</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Tiết</th>
+                    <th>Thứ 2</th>
+                    <th>Thứ 3</th>
+                    <th>Thứ 4</th>
+                    <th>Thứ 5</th>
+                    <th>Thứ 6</th>
+                    <th>Thứ 7</th>
+                    <th>CN</th>
+                </tr>
+            </thead>
+            <tbody id="schedule-body-khoi6"></tbody>
+        </table>
+
+        <h1>Thời Khóa Biểu Khối 7</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Tiết</th>
+                    <th>Thứ 2</th>
+                    <th>Thứ 3</th>
+                    <th>Thứ 4</th>
+                    <th>Thứ 5</th>
+                    <th>Thứ 6</th>
+                    <th>Thứ 7</th>
+                    <th>CN</th>
+                </tr>
+            </thead>
+            <tbody id="schedule-body-khoi7"></tbody>
+        </table>
+
+        <h1>Thời Khóa Biểu Khối 8</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Tiết</th>
+                    <th>Thứ 2</th>
+                    <th>Thứ 3</th>
+                    <th>Thứ 4</th>
+                    <th>Thứ 5</th>
+                    <th>Thứ 6</th>
+                    <th>Thứ 7</th>
+                    <th>CN</th>
+                </tr>
+            </thead>
+            <tbody id="schedule-body-khoi8"></tbody>
+        </table>
+
+        <h1>Thời Khóa Biểu Khối 9</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Tiết</th>
+                    <th>Thứ 2</th>
+                    <th>Thứ 3</th>
+                    <th>Thứ 4</th>
+                    <th>Thứ 5</th>
+                    <th>Thứ 6</th>
+                    <th>Thứ 7</th>
+                    <th>CN</th>
+                </tr>
+            </thead>
+            <tbody id="schedule-body-khoi9"></tbody>
+        </table>
+
+        <h1>Thời Khóa Biểu Khối 10</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Tiết</th>
+                    <th>Thứ 2</th>
+                    <th>Thứ 3</th>
+                    <th>Thứ 4</th>
+                    <th>Thứ 5</th>
+                    <th>Thứ 6</th>
+                    <th>Thứ 7</th>
+                    <th>CN</th>
+                </tr>
+            </thead>
+            <tbody id="schedule-body-khoi10"></tbody>
+        </table>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script> 
+    <script src="test.js"></script>
+</body>
+</html>
