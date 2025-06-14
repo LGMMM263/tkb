@@ -54,9 +54,14 @@ const periodsAfternoon = [
 
 ];
 const periodsEvening = [
-    { label: "Tiết 11", time: "18h00 - 18h45" },
-    { label: "Tiết 12", time: "19h00 - 19h45" },
-    { label: "Tiết 13", time: "20h00 - 20h45" }
+    { time: "18h-19h30" },
+    { time: "18h30-20h" },
+    { time: "18h30-20h30" },
+    { time: "19h-21h" },
+    { time: "19h30-21h" },
+    { time: "19h30-21h30" },
+    { time: "20h-21h30" },
+    { time: "20h-22h" },
 ];
 const periods = [...periodsMorning, ...periodsAfternoon, ...periodsEvening];
 const COLS = 7;
