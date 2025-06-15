@@ -119,7 +119,7 @@
             background-color: #333333; /* Màu xen kẽ cho hàng */
         }
 
-        .section-title {
+      .section-title {
             background-color: #444444; /* Nền cho các tiêu đề buổi (Sáng, Chiều, Tối) */
             color: #add8e6; /* Màu xanh nhạt */
             font-weight: bold;
@@ -134,7 +134,7 @@
 
         /* Kiểu chữ cho ô trống */
         span[style*='color:#aaa'] {
-            color: #888888 !important; /* Đảm bảo màu xám nhạt hiển thị trên nền tối */
+            color: #888888!important; /* Đảm bảo màu xám nhạt hiển thị trên nền tối */
         }
 
         footer {
@@ -146,7 +146,7 @@
             border-top: 1px solid #333333; /* Đường viền trên footer */
         }
 
-        /* CSS mới cho bộ lọc */
+        /* CSS cho bộ lọc */
         #filter-section {
             padding: 20px;
             background-color: #2b2b2b;
@@ -161,15 +161,42 @@
             text-align: center;
         }
 
-        .filter-group {
+      .filter-group {
             margin-bottom: 15px;
         }
 
-        .filter-group label {
-            display: block;
+        /* Đảm bảo label và input cùng dòng */
+      .filter-group > label {
+            display: inline-block; /* Hoặc flex */
             margin-bottom: 8px;
             font-weight: bold;
             color: #ffffff;
+        }
+
+        /* Style cho phần summary của details */
+      .filter-group details > summary {
+            font-weight: bold;
+            padding: 10px;
+            background-color: #444444; /* Nền cho summary */
+            color: #ffffff;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 10px; /* Khoảng cách từ nội dung bên trong */
+            list-style: none; /* Ẩn mũi tên mặc định */
+        }
+
+        /* Tạo mũi tên tùy chỉnh cho summary */
+      .filter-group details > summary::-webkit-details-marker {
+            display: none;
+        }
+      .filter-group details > summary::before {
+            content: '▶'; /* Mũi tên chỉ sang phải */
+            margin-right: 8px;
+            transition: transform 0.2s ease;
+        }
+      .filter-group details[open] > summary::before {
+            content: '▼'; /* Mũi tên chỉ xuống khi mở */
+            transform: rotate(90deg); /* Xoay mũi tên */
         }
 
         #period-checkboxes, #day-checkboxes {
@@ -177,6 +204,9 @@
             flex-wrap: wrap; /* Cho phép các checkbox xuống dòng */
             gap: 15px; /* Khoảng cách giữa các checkbox */
             margin-top: 5px; /* Khoảng cách từ label */
+            padding: 10px; /* Thêm padding bên trong để checkbox không sát viền */
+            border: 1px solid #3a3a3a; /* Viền nhẹ */
+            border-radius: 5px;
         }
 
         #period-checkboxes div, #day-checkboxes div {
@@ -198,14 +228,14 @@
             cursor: pointer; /* Biến con trỏ thành pointer khi hover label */
         }
 
-        .filter-buttons {
+      .filter-buttons {
             display: flex;
             justify-content: center;
             gap: 10px; /* Khoảng cách giữa các nút lọc */
             margin-top: 20px;
         }
 
-        .filter-buttons button, #btn-filter {
+      .filter-buttons button, #btn-filter {
             padding: 10px 25px;
             border-radius: 5px;
             border: none;
@@ -216,15 +246,15 @@
             transition: background-color 0.2s ease;
         }
 
-        .filter-buttons button:hover, #btn-filter:hover {
+      .filter-buttons button:hover, #btn-filter:hover {
             background-color: #0056b3;
         }
 
-        .filter-buttons .clear-button {
+      .filter-buttons.clear-button { /* Đã sửa.filter-buttons.clear-button thành.filter-buttons.clear-button */
             background-color: #6c757d; /* Màu xám cho nút xóa */
         }
 
-        .filter-buttons .clear-button:hover {
+      .filter-buttons.clear-button:hover { /* Đã sửa.filter-buttons.clear-button thành.filter-buttons.clear-button */
             background-color: #5a6268;
         }
 
@@ -264,6 +294,110 @@
             margin-bottom: 5px;
             color: #cccccc;
         }
+
+        /* CSS cho phần tìm kiếm giáo viên */
+        #search-teacher-section {
+            padding: 20px;
+            background-color: #2b2b2b;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            margin-top: 30px; /* Thêm khoảng cách với phần tử phía trên */
+        }
+
+        #search-teacher-section h3 {
+            color: #add8e6;
+            margin-top: 0;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+     .search-input-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        #teacher-name-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #555555;
+            border-radius: 4px;
+            background-color: #333333;
+            color: #ffffff;
+            max-width: 300px;
+        }
+
+        #btn-search-teacher {
+            padding: 10px 25px;
+            border-radius: 5px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.2s ease;
+        }
+
+        #btn-search-teacher:hover {
+            background-color: #0056b3;
+        }
+
+        #search-results-teacher {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #333333;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.1em;
+            color: #e0e0e0;
+            display: none; /* Ban đầu ẩn đi */
+        }
+
+        #search-results-teacher h4 {
+            color: #add8e6;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        #search-results-teacher ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 10px;
+            text-align: left;
+            max-width: 450px; /* Giới hạn chiều rộng để dễ đọc */
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #search-results-teacher ul li {
+            margin-bottom: 5px;
+            color: #cccccc;
+        }
+
+        /* CSS cho container chứa các logo mạng xã hội */
+      .social-icons-container {
+            position: fixed; /* Giữ vị trí cố định trên màn hình */
+            bottom: 20px; /* Cách lề dưới 20px */
+            right: 20px; /* Cách lề phải 20px */
+            z-index: 1000; /* Đảm bảo nó nằm trên cùng các phần tử khác */
+            display: flex; /* Sắp xếp các icon theo chiều ngang */
+            gap: 15px; /* Khoảng cách giữa các icon */
+        }
+
+        /* CSS chung cho hình ảnh logo bên trong các wrapper */
+      .social-icons-container img {
+            width: 50px; /* Kích thước logo */
+            height: 50px;
+            border-radius: 50%; /* Làm tròn hình ảnh */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); /* Thêm bóng đổ nhẹ */
+            transition: transform 0.3s ease; /* Hiệu ứng phóng to khi di chuột qua */
+        }
+
+        /* Hiệu ứng hover cho cả hai logo */
+      .social-icons-container img:hover {
+            transform: scale(1.1); /* Phóng to 1.1 lần khi di chuột qua */
+        }
     </style>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 </head>
@@ -291,13 +425,15 @@
             <h3>Lọc thời khóa biểu theo khung giờ và ngày</h3>
 
             <div class="filter-group">
-                <label>Chọn khung giờ:</label>
-                <div id="period-checkboxes">
+                <details>
+                    <summary>Chọn khung giờ (Click để mở rộng/thu gọn)</summary>
+                    <div id="period-checkboxes">
+                        </div>
+                    <div class="filter-buttons">
+                        <button id="btn-clear-periods" class="clear-button">Bỏ chọn tất cả khung giờ</button>
+                        <button id="btn-select-all-periods">Chọn tất cả khung giờ</button>
                     </div>
-                <div class="filter-buttons">
-                    <button id="btn-clear-periods" class="clear-button">Bỏ chọn tất cả khung giờ</button>
-                    <button id="btn-select-all-periods">Chọn tất cả khung giờ</button>
-                </div>
+                </details>
             </div>
 
             <div class="filter-group">
@@ -319,6 +455,21 @@
             <ul id="classes-by-khoi-list">
                 </ul>
         </div>
+
+        <div id="search-teacher-section">
+            <h3>Tìm kiếm theo giáo viên</h3>
+            <div class="search-input-group">
+                <input type="text" id="teacher-name-input" placeholder="Nhập tên giáo viên...">
+                <button id="btn-search-teacher">Tìm kiếm</button>
+            </div>
+            <div id="search-results-teacher" style="display: none;">
+                <h4>Lịch dạy của giáo viên: <span id="found-teacher-name"></span></h4>
+                <p>Tổng số lớp tìm thấy: <span id="total-teacher-classes-count">0</span></p>
+                <ul id="teacher-classes-list">
+                    </ul>
+            </div>
+        </div>
+
         <h1>Thời Khóa Biểu Khối 6</h1>
         <table>
             <thead>
@@ -403,6 +554,19 @@
             </thead>
             <tbody id="schedule-body-khoi10"></tbody>
         </table>
+    </div>
+
+    <div class="social-icons-container">
+        <div class="messenger-icon-wrapper">
+            <a href="https://m.me/ArisThanhTri" target="_blank" aria-label="Liên hệ qua Messenger">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Facebook_Messenger_logo_2020.svg/512px-Facebook_Messenger_logo_2020.svg.png" alt="Messenger Icon">
+            </a>
+        </div>
+        <div class="zalo-icon-wrapper">
+            <a href="https://zalo.me/0989272184" target="_blank" aria-label="Liên hệ qua Zalo">
+                <img src="data:image/png;base64,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" alt="Zalo Icon">
+            </a>
+        </div>
     </div>
 
     <footer>

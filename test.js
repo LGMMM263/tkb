@@ -1,4 +1,5 @@
 // Cấu hình Firebase
+// Các biến này không phụ thuộc vào DOM, nên có thể khai báo ở đây.
 const firebaseConfig = {
     apiKey: "AIzaSyDt0pyCqJfa67knnOq1ihUMcqJaeYTQbXQ",
     authDomain: "check-tkb.firebaseapp.com",
@@ -12,33 +13,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Các phần tử DOM
-const loginEmail = document.getElementById("login-email");
-const loginPassword = document.getElementById("login-password");
-const btnLogin = document.getElementById("btn-login");
-const btnSignup = document.getElementById("btn-signup");
-const btnLogout = document.getElementById("btn-logout");
-const authError = document.getElementById("auth-error");
-const userEmailSpan = document.getElementById("user-email");
-const authSection = document.getElementById("auth-section");
-const scheduleContainer = document.getElementById("schedule-container");
-
-// DOM elements cho bộ lọc mới
-const periodCheckboxesDiv = document.getElementById("period-checkboxes");
-const dayCheckboxesDiv = document.getElementById("day-checkboxes");
-const btnFilter = document.getElementById("btn-filter");
-const filterResultsDiv = document.getElementById("filter-results");
-const totalClassesCountSpan = document.getElementById("total-classes-count");
-const classesByKhoiList = document.getElementById("classes-by-khoi-list");
-
-// New DOM elements for clear/select all buttons
-const btnClearPeriods = document.getElementById("btn-clear-periods");
-const btnSelectAllPeriods = document.getElementById("btn-select-all-periods");
-const btnClearDays = document.getElementById("btn-clear-days");
-const btnSelectAllDays = document.getElementById("btn-select-all-days");
-
-
-// Định nghĩa các khung giờ (đã bỏ label)
+// Định nghĩa các khung giờ (các biến này không phụ thuộc vào DOM)
 const periodsMorning = [
     { time: "8h-10h" },
     { time: "8h-11h" },
@@ -77,367 +52,510 @@ const periodsEvening = [
     { time: "20h-21h30" },
     { time: "20h-22h" },
 ];
-const periods = [...periodsMorning, ...periodsAfternoon, ...periodsEvening];
+const periods = [...periodsMorning, ...periodsAfternoon, ...periodsEvening]; // Tổng cộng 32 khung giờ
 const COLS = 7; // Số cột (Thứ 2 đến CN)
 const days = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "CN"]; // Mảng các ngày trong tuần
-const scheduleUnsubscribeFunctions = {};
+const scheduleUnsubscribeFunctions = {}; // Đối tượng lưu trữ các hàm hủy đăng ký snapshot Firestore
 
-// Hàm để điền các checkbox khung giờ
-function populatePeriodCheckboxes(checkAll = true) {
-    periodCheckboxesDiv.innerHTML = ''; // Xóa các checkbox cũ
-    periods.forEach((p, index) => {
-        const div = document.createElement('div');
-        const input = document.createElement('input');
-        input.type = 'checkbox';
-        input.id = `period-${index}`;
-        input.value = p.time; // Giá trị là chuỗi thời gian
-        input.checked = checkAll; // Mặc định chọn tất cả các khung giờ hoặc không chọn
+// Biến toàn cục để lưu trữ toàn bộ dữ liệu thời khóa biểu sau khi được tải về
+// Cấu trúc: { khoiId: [ { day0: [{subject, teacher}], day1: [] }, ... ], ... }
+// Đây là cấu trúc mà `editCell` mong đợi và chúng ta sẽ chuẩn hóa mọi thứ theo nó.
+let allSchedulesData = {};
 
-        const label = document.createElement('label');
-        label.htmlFor = `period-${index}`;
-        label.textContent = p.time;
+// Bọc toàn bộ mã JavaScript còn lại vào sự kiện DOMContentLoaded
+// Điều này đảm bảo rằng tất cả các phần tử HTML đã được tải vào DOM
+// trước khi JavaScript cố gắng truy cập hoặc thao tác với chúng.
+document.addEventListener('DOMContentLoaded', () => {
+    // Các phần tử DOM chính
+    const loginEmail = document.getElementById("login-email");
+    const loginPassword = document.getElementById("login-password");
+    const btnLogin = document.getElementById("btn-login");
+    const btnSignup = document.getElementById("btn-signup");
+    const btnLogout = document.getElementById("btn-logout");
+    const authError = document.getElementById("auth-error");
+    const userEmailSpan = document.getElementById("user-email");
+    const authSection = document.getElementById("auth-section");
+    const scheduleContainer = document.getElementById("schedule-container");
 
-        div.appendChild(input);
-        div.appendChild(label);
-        periodCheckboxesDiv.appendChild(div);
-    });
-}
+    // Các phần tử DOM cho bộ lọc thời khóa biểu
+    const periodCheckboxesDiv = document.getElementById("period-checkboxes");
+    const dayCheckboxesDiv = document.getElementById("day-checkboxes");
+    const btnFilter = document.getElementById("btn-filter");
+    const filterResultsDiv = document.getElementById("filter-results");
+    const totalClassesCountSpan = document.getElementById("total-classes-count");
+    const classesByKhoiList = document.getElementById("classes-by-khoi-list");
 
-// Hàm để điền các checkbox ngày
-function populateDayCheckboxes(checkAll = true) {
-    dayCheckboxesDiv.innerHTML = ''; // Xóa các checkbox cũ
-    days.forEach((day, index) => {
-        const div = document.createElement('div');
-        const input = document.createElement('input');
-        input.type = 'checkbox';
-        input.id = `day-${index}`;
-        input.value = index; // Giá trị là chỉ số ngày (0 cho T2, 1 cho T3, ...)
-        input.checked = checkAll; // Mặc định chọn tất cả các ngày hoặc không chọn
+    // Các nút chọn/bỏ chọn tất cả cho bộ lọc
+    const btnClearPeriods = document.getElementById("btn-clear-periods");
+    const btnSelectAllPeriods = document.getElementById("btn-select-all-periods");
+    const btnClearDays = document.getElementById("btn-clear-days");
+    const btnSelectAllDays = document.getElementById("btn-select-all-days");
 
-        const label = document.createElement('label');
-        label.htmlFor = `day-${index}`;
-        label.textContent = day;
+    // Các phần tử DOM mới cho tìm kiếm giáo viên
+    const teacherNameInput = document.getElementById('teacher-name-input');
+    const btnSearchTeacher = document.getElementById('btn-search-teacher');
+    const searchResultsTeacherDiv = document.getElementById('search-results-teacher');
+    const teacherClassesList = document.getElementById('teacher-classes-list');
+    const foundTeacherNameSpan = document.getElementById('found-teacher-name');
+    const totalTeacherClassesCountSpan = document.getElementById('total-teacher-classes-count');
 
-        div.appendChild(input);
-        div.appendChild(label);
-        dayCheckboxesDiv.appendChild(div);
-    });
-}
+    // Hàm để điền các checkbox khung giờ
+    function populatePeriodCheckboxes(checkAll = true) {
+        periodCheckboxesDiv.innerHTML = ''; // Xóa các checkbox cũ
+        periods.forEach((p, index) => {
+            const div = document.createElement('div');
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.id = `period-${index}`;
+            input.value = p.time; // Giá trị là chuỗi thời gian
+            input.checked = checkAll; // Mặc định chọn tất cả các khung giờ hoặc không chọn
 
-// Hàm chung để xử lý chọn/bỏ chọn tất cả checkboxes trong một container
-function setAllCheckboxes(container, checked) {
-    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = checked;
-    });
-}
+            const label = document.createElement('label');
+            label.htmlFor = `period-${index}`;
+            label.textContent = p.time;
 
-// Xác thực
-btnLogin.addEventListener("click", () => {
-    auth.signInWithEmailAndPassword(loginEmail.value, loginPassword.value)
-        .catch(error => {
-            authError.textContent = getAuthErrorMessage(error.code);
+            div.appendChild(input);
+            div.appendChild(label);
+            periodCheckboxesDiv.appendChild(div);
         });
-});
-
-btnSignup.addEventListener("click", async () => {
-    try {
-        const userCredential = await auth.createUserWithEmailAndPassword(loginEmail.value, loginPassword.value);
-        await db.collection('users').doc(userCredential.user.uid).set({
-            email: userCredential.user.email,
-            role: 'viewer'
-        });
-        alert("Đăng ký thành công!");
-    } catch (error) {
-        authError.textContent = getAuthErrorMessage(error.code);
-        console.error("Lỗi đăng ký:", error.code, error.message);
     }
-});
 
-btnLogout.addEventListener("click", () => {
-    auth.signOut();
-});
+    // Hàm để điền các checkbox ngày
+    function populateDayCheckboxes(checkAll = true) {
+        dayCheckboxesDiv.innerHTML = ''; // Xóa các checkbox cũ
+        days.forEach((day, index) => {
+            const div = document.createElement('div');
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.id = `day-${index}`;
+            input.value = index; // Giá trị là chỉ số ngày (0 cho T2, 1 cho T3, ...)
+            input.checked = checkAll; // Mặc định chọn tất cả các ngày hoặc không chọn
 
-// Lắng nghe trạng thái xác thực của người dùng
-auth.onAuthStateChanged(async (user) => {
-    if (user) {
-        authSection.style.display = "none";
-        scheduleContainer.style.display = "block";
-        btnLogout.style.display = "block";
-        userEmailSpan.textContent = user.email;
-        authError.textContent = "";
+            const label = document.createElement('label');
+            label.htmlFor = `day-${index}`;
+            label.textContent = day;
 
-        let userRole = 'viewer';
+            div.appendChild(input);
+            div.appendChild(label);
+            dayCheckboxesDiv.appendChild(div);
+        });
+    }
+
+    // Hàm chung để xử lý chọn/bỏ chọn tất cả checkboxes trong một container
+    function setAllCheckboxes(container, checked) {
+        const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = checked;
+        });
+    }
+
+    // Xác thực - Xử lý đăng nhập
+    btnLogin.addEventListener("click", () => {
+        auth.signInWithEmailAndPassword(loginEmail.value, loginPassword.value)
+            .catch(error => {
+                authError.textContent = getAuthErrorMessage(error.code);
+            });
+    });
+
+    // Xác thực - Xử lý đăng ký
+    btnSignup.addEventListener("click", async () => {
         try {
-            const doc = await db.collection('users').doc(user.uid).get();
-            if (doc.exists) {
-                userRole = doc.data().role || 'viewer';
-            } else {
-                // Nếu người dùng không có vai trò, gán mặc định là 'viewer' và lưu vào Firestore
-                await db.collection('users').doc(user.uid).set({
-                    email: user.email,
-                    role: 'viewer'
-                });
-            }
-        } catch (err) {
-            console.error("Lỗi khi lấy hoặc tạo vai trò người dùng:", err);
-            userRole = 'viewer'; // Đảm bảo vai trò là 'viewer' nếu có lỗi
-        }
-        renderAllSchedules(userRole);
-        populatePeriodCheckboxes(); // Gọi hàm mới để điền các checkbox khung giờ (mặc định chọn tất cả)
-        populateDayCheckboxes(); // Điền các checkbox ngày (mặc định chọn tất cả)
-
-        filterResultsDiv.style.display = 'none';
-
-    } else {
-        clearAllSchedules();
-        for (const key in scheduleUnsubscribeFunctions) {
-            scheduleUnsubscribeFunctions[key]();
-            delete scheduleUnsubscribeFunctions[key];
-        }
-        authSection.style.display = "block";
-        scheduleContainer.style.display = "none";
-        btnLogout.style.display = "none";
-        userEmailSpan.textContent = "";
-        authError.textContent = "";
-        filterResultsDiv.style.display = 'none';
-    }
-});
-
-function getAuthErrorMessage(code) {
-    switch (code) {
-        case 'auth/email-already-in-use': return 'Email đã được sử dụng bởi một tài khoản khác.';
-        case 'auth/invalid-email': return 'Địa chỉ email không hợp lệ.';
-        case 'auth/weak-password': return 'Mật khẩu quá yếu. Vui lòng nhập mật khẩu tối thiểu 6 ký tự.';
-        case 'auth/user-not-found': return 'Không tìm thấy người dùng với email này.';
-        case 'auth/wrong-password': return 'Mật khẩu không chính xác.';
-        case 'auth/network-request-failed': return 'Lỗi mạng. Vui lòng kiểm tra kết nối internet của bạn.';
-        default: return 'Đã xảy ra lỗi xác thực không xác định. Vui lòng thử lại.';
-    }
-}
-
-function renderAllSchedules(role) {
-    ['khoi6', 'khoi7', 'khoi8', 'khoi9', 'khoi10'].forEach(khoi => {
-        renderSchedule(`schedule-body-${khoi}`, khoi, role);
-    });
-}
-
-function clearAllSchedules() {
-    ['khoi6', 'khoi7', 'khoi8', 'khoi9', 'khoi10'].forEach(khoi => {
-        document.getElementById(`schedule-body-${khoi}`).innerHTML = "";
-    });
-}
-
-// Render thời khóa biểu cho một khối cụ thể
-function renderSchedule(bodyId, khoiId, role) {
-    const tbody = document.getElementById(bodyId);
-    if (scheduleUnsubscribeFunctions[khoiId]) {
-        scheduleUnsubscribeFunctions[khoiId]();
-    }
-
-    const docRef = db.collection("schedules").doc(khoiId);
-
-    scheduleUnsubscribeFunctions[khoiId] = docRef.onSnapshot(async doc => {
-        let data = doc.exists && doc.data().data ? doc.data().data : [];
-
-        if (!doc.exists) {
-            // Khởi tạo cấu trúc dữ liệu nếu document không tồn tại
-            data = periods.map(() => {
-                const row = {};
-                for (let d = 0; d < COLS; d++) row[`day${d}`] = [];
-                return row;
+            const userCredential = await auth.createUserWithEmailAndPassword(loginEmail.value, loginPassword.value);
+            // Sau khi đăng ký thành công, lưu thông tin người dùng và vai trò mặc định vào Firestore
+            await db.collection('users').doc(userCredential.user.uid).set({
+                email: userCredential.user.email,
+                role: 'viewer' // Gán vai trò mặc định là 'viewer'
             });
-            await docRef.set({ data }); // Lưu cấu trúc rỗng vào Firestore
+            alert("Đăng ký thành công!");
+        } catch (error) {
+            authError.textContent = getAuthErrorMessage(error.code);
+            console.error("Lỗi đăng ký:", error.code, error.message);
         }
+    });
 
-        tbody.innerHTML = "";
-        const groups = [periodsMorning, periodsAfternoon, periodsEvening];
-        const titles = ["Buổi Sáng", "Buổi Chiều", "Buổi Tối"];
+    // Xử lý đăng xuất
+    btnLogout.addEventListener("click", () => {
+        auth.signOut();
+    });
 
-        let idx = 0; // Index tổng thể cho từng khung giờ trong mảng `periods`
-        groups.forEach((group, gIdx) => {
-            tbody.innerHTML += `<tr><td colspan="${COLS + 1}" class="section-title">${titles[gIdx]}</td></tr>`;
+    // Lắng nghe trạng thái xác thực của người dùng
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            // Người dùng đã đăng nhập
+            authSection.style.display = "none";
+            scheduleContainer.style.display = "block";
+            btnLogout.style.display = "block";
+            userEmailSpan.textContent = user.email;
+            authError.textContent = "";
 
-            group.forEach(p => {
-                // Chỉ hiển thị thời gian, không có label
-                let row = `<tr><td><strong>${p.time}</strong></td>`;
-                for (let d = 0; d < COLS; d++) {
-                    const lessons = data[idx]?.[`day${d}`] || [];
-                    let content = lessons.length ?
-                        lessons.map(l => `<strong>${l.subject}</strong><br><small>${l.teacher}</small>`).join('<br>') :
-                        "<span style='color:#aaa'>(trống)</span>";
-
-                    const isEditable = (role === 'admin' || role === `editor_${khoiId}`);
-                    const cursorStyle = isEditable ? 'pointer' : 'default';
-                    const onClickHandler = isEditable ? `editCell(${idx},${d},'${khoiId}')` : '';
-
-                    row += `<td style="cursor:${cursorStyle}" onclick="${onClickHandler}">${content}</td>`;
+            let userRole = 'viewer';
+            try {
+                // Lấy vai trò của người dùng từ Firestore
+                const doc = await db.collection('users').doc(user.uid).get();
+                if (doc.exists) {
+                    userRole = doc.data().role || 'viewer';
+                } else {
+                    // Nếu người dùng không có vai trò, gán mặc định là 'viewer' và lưu vào Firestore
+                    await db.collection('users').doc(user.uid).set({
+                        email: user.email,
+                        role: 'viewer'
+                    });
                 }
-                row += "</tr>";
-                tbody.innerHTML += row;
-                idx++;
-            });
-        });
-    }, err => {
-        console.error("Lỗi khi tải thời khóa biểu:", err);
-        tbody.innerHTML = "<tr><td colspan='" + (COLS + 1) + "' style='color:red'>Lỗi tải dữ liệu. Vui lòng kiểm tra kết nối hoặc quyền truy cập.</td></tr>";
+            } catch (err) {
+                console.error("Lỗi khi lấy hoặc tạo vai trò người dùng:", err);
+                userRole = 'viewer'; // Đảm bảo vai trò là 'viewer' nếu có lỗi
+            }
+            renderAllSchedules(userRole); // Render tất cả thời khóa biểu
+            populatePeriodCheckboxes(); // Điền các checkbox khung giờ (mặc định chọn tất cả)
+            populateDayCheckboxes(); // Điền các checkbox ngày (mặc định chọn tất cả)
+
+            filterResultsDiv.style.display = 'none'; // Ẩn kết quả lọc ban đầu
+            teacherNameInput.value = ''; // Xóa nội dung tìm kiếm giáo viên khi đăng nhập
+            searchResultsTeacherDiv.style.display = 'none'; // Ẩn kết quả tìm kiếm giáo viên ban đầu
+
+        } else {
+            // Người dùng đã đăng xuất
+            clearAllSchedules(); // Xóa tất cả thời khóa biểu trên giao diện
+            // Hủy đăng ký tất cả các listener snapshot để tránh rò rỉ bộ nhớ
+            for (const key in scheduleUnsubscribeFunctions) {
+                scheduleUnsubscribeFunctions[key]();
+                delete scheduleUnsubscribeFunctions[key];
+            }
+            authSection.style.display = "block";
+            scheduleContainer.style.display = "none";
+            btnLogout.style.display = "none";
+            userEmailSpan.textContent = "";
+            authError.textContent = "";
+            filterResultsDiv.style.display = 'none';
+            searchResultsTeacherDiv.style.display = 'none';
+        }
     });
-}
 
-// Chức năng chỉnh sửa ô thời khóa biểu (global function)
-window.editCell = async function (i, j, khoiId) {
-    try {
-        const doc = await db.collection("schedules").doc(khoiId).get();
-        if (!doc.exists) {
-            console.error(`Document for ${khoiId} does not exist.`);
-            alert("Lỗi: Không tìm thấy dữ liệu thời khóa biểu cho khối này.");
+    // Hàm lấy thông báo lỗi xác thực dễ hiểu
+    function getAuthErrorMessage(code) {
+        switch (code) {
+            case 'auth/email-already-in-use': return 'Email đã được sử dụng bởi một tài khoản khác.';
+            case 'auth/invalid-email': return 'Địa chỉ email không hợp lệ.';
+            case 'auth/operation-not-allowed': return 'Đăng nhập bằng email/mật khẩu không được bật. Vui lòng liên hệ quản trị viên.';
+            case 'auth/weak-password': return 'Mật khẩu quá yếu. Mật khẩu phải có ít nhất 6 ký tự.';
+            case 'auth/wrong-password': return 'Mật khẩu không đúng.';
+            case 'auth/user-not-found': return 'Không tìm thấy người dùng với email này.';
+            default: return 'Đã xảy ra lỗi xác thực. Vui lòng thử lại.';
+        }
+    }
+
+    /**
+     * Hàm để render thời khóa biểu cho một khối cụ thể và lắng nghe thay đổi từ Firestore.
+     * Đồng thời, đảm bảo cấu trúc dữ liệu luôn khớp với số lượng khung giờ hiện tại
+     * và lưu vào biến toàn cục `allSchedulesData` theo cấu trúc Array-of-Objects.
+     * @param {string} khoiId - ID của khối (ví dụ: 'khoi6', 'khoi7').
+     * @param {string} role - Vai trò của người dùng hiện tại ('admin', 'editor_khoiX', 'viewer', 'Editor').
+     */
+    function renderSchedule(khoiId, role) {
+        const tbody = document.getElementById(`schedule-body-${khoiId}`);
+        if (!tbody) {
+            console.error(`Không tìm thấy tbody cho khối ${khoiId}`);
             return;
         }
 
-        let data = doc.data().data;
-        if (!data || !Array.isArray(data) || data.length <= i) {
-            console.error(`Data structure for ${khoiId} is invalid or index ${i} is out of bounds.`);
-            alert("Lỗi: Cấu trúc dữ liệu thời khóa biểu không hợp lệ.");
-            return;
+        // Hủy đăng ký listener cũ nếu có để tránh trùng lặp hoặc rò rỉ bộ nhớ
+        if (scheduleUnsubscribeFunctions[khoiId]) {
+            scheduleUnsubscribeFunctions[khoiId]();
         }
 
-        const lessons = data[i][`day${j}`] || [];
-        const current = lessons.map(l => `${l.subject}, ${l.teacher}`).join('; ');
-        const input = prompt("Nhập môn, giáo viên (vd: Toán, Thầy A; Lý, Cô B):", current);
+        const docRef = db.collection("schedules").doc(khoiId);
 
-        if (input === null) return; // Người dùng nhấn Hủy
+        // Lắng nghe thay đổi của tài liệu thời khóa biểu trong Firestore
+        scheduleUnsubscribeFunctions[khoiId] = docRef.onSnapshot(async doc => {
+            let dataFromFirestore = doc.exists && doc.data().data ? doc.data().data : [];
 
-        const newLessons = input.split(';').map(s => {
-            const [subject, teacher = ''] = s.split(',').map(p => p.trim());
-            return { subject, teacher };
-        }).filter(l => l.subject); // Lọc bỏ các mục không có môn học
+            // --- BẮT ĐẦU PHẦN ĐẢM BẢO CẤU TRÚC DỮ LIỆU ---
+            // Khởi tạo/cập nhật cấu trúc dữ liệu nếu không tồn tại, không phải mảng,
+            // hoặc có độ dài không khớp với `periods.length`.
+            // Chuẩn hóa thành Array-of-Objects: [{ day0: [], day1: [] }, ...]
+            if (!doc.exists || !Array.isArray(dataFromFirestore) || dataFromFirestore.length !== periods.length) {
+                console.warn(`Dữ liệu cho ${khoiId} bị thiếu hoặc có cấu trúc không hợp lệ (số lượng khung giờ không khớp). Đang khởi tạo lại/cập nhật cấu trúc.`);
+                
+                const newData = periods.map((_, pIdx) => {
+                    const row = {};
+                    for (let d = 0; d < COLS; d++) {
+                        // Cố gắng bảo toàn dữ liệu hiện có cho từng ô nếu nó tồn tại và hợp lệ
+                        row[`day${d}`] = (dataFromFirestore[pIdx] && dataFromFirestore[pIdx][`day${d}`] && Array.isArray(dataFromFirestore[pIdx][`day${d}`]))
+                                        ? dataFromFirestore[pIdx][`day${d}`]
+                                        : [];
+                    }
+                    return row;
+                });
+                
+                // Lưu cấu trúc dữ liệu đã được điều chỉnh trở lại Firestore.
+                // Điều này sẽ kích hoạt lại onSnapshot với dữ liệu chính xác.
+                await docRef.set({ data: newData }); // Lưu vào trường 'data'
+                return; // Thoát khỏi hàm để đợi listener được kích hoạt lại với dữ liệu mới
+            }
+            // --- KẾT THÚC PHẦN ĐẢM BẢO CẤU TRÚC DỮ LIỆU ---
 
-        // Cập nhật dữ liệu và lưu vào Firestore
-        data[i][`day${j}`] = newLessons;
-        await db.collection("schedules").doc(khoiId).set({ data }, { merge: true });
-        console.log(`Đã cập nhật ô [${i}][day${j}] của ${khoiId}`);
-    } catch (error) {
-        console.error("Lỗi khi chỉnh sửa ô:", error);
-        alert(`Lỗi khi cập nhật thời khóa biểu: ${getAuthErrorMessage(error.code) || error.message}`);
+            // Cập nhật biến toàn cục allSchedulesData
+            allSchedulesData[khoiId] = dataFromFirestore;
+
+            // Bắt đầu render bảng thời khóa biểu
+            tbody.innerHTML = "";
+            const groups = [periodsMorning, periodsAfternoon, periodsEvening];
+            const titles = ["Buổi Sáng", "Buổi Chiều", "Buổi Tối"];
+
+            let periodIndexInOverallPeriods = 0; // Index tổng thể cho từng khung giờ trong mảng `periods`
+            groups.forEach((group, gIdx) => {
+                tbody.innerHTML += `<tr><td colspan="${COLS + 1}" class="section-title">${titles[gIdx]}</td></tr>`;
+
+                group.forEach(p => {
+                    let row = `<tr><td><strong>${p.time}</strong></td>`;
+                    for (let d = 0; d < COLS; d++) { // d là chỉ số ngày (0-6) tương ứng với Thứ 2 - CN
+                        // Truy cập dữ liệu từ dataFromFirestore[periodIndexInOverallPeriods][`day${d}`]
+                        const lessons = dataFromFirestore[periodIndexInOverallPeriods] && dataFromFirestore[periodIndexInOverallPeriods][`day${d}`]
+                                        ? dataFromFirestore[periodIndexInOverallPeriods][`day${d}`]
+                                        : [];
+                        
+                        let content = lessons.length ?
+                            lessons.map(l => `<strong>${l.subject}</strong><br><small>${l.teacher}</small>`).join('<br>') :
+                            "<span style='color:#aaa'>(trống)</span>";
+
+                        // Xác định quyền chỉnh sửa
+                        const isEditable = (role === 'admin' || role === `editor_${khoiId}` || role === 'Editor');
+                        const cursorStyle = isEditable ? 'pointer' : 'default';
+                        // Truyền periodIndexInOverallPeriods (idx), d (day index), và khoiId
+                        const onClickHandler = isEditable ? `editCell(${periodIndexInOverallPeriods},${d},'${khoiId}')` : '';
+
+                        row += `<td style="cursor:${cursorStyle}" onclick="${onClickHandler}">${content}</td>`;
+                    }
+                    row += "</tr>";
+                    tbody.innerHTML += row;
+                    periodIndexInOverallPeriods++;
+                });
+            });
+        }, err => {
+            console.error("Lỗi khi tải thời khóa biểu:", err);
+            tbody.innerHTML = "<tr><td colspan='" + (COLS + 1) + "' style='color:red'>Lỗi tải dữ liệu. Vui lòng kiểm tra kết nối hoặc quyền truy cập.</td></tr>";
+        });
     }
-};
 
-/**
- * Đếm số lớp học trong các khung giờ và ngày đã chọn cho tất cả các khối.
- * @param {string[]} selectedPeriods - Mảng các chuỗi thời gian của khung giờ được chọn (ví dụ: ["8h-10h", "14h - 15h30"]).
- * @param {number[]} selectedDayIndices - Mảng các chỉ số ngày được chọn (0 cho Thứ 2, 1 cho Thứ 3, ..., 6 cho Chủ Nhật).
- * @returns {Promise<{total: number, byKhoi: object}>} Tổng số lớp và số lớp theo từng khối.
- */
-async function countClassesInMultiplePeriodsAndDays(selectedPeriods, selectedDayIndices) {
-    let totalClasses = 0;
-    const classesByKhoi = {};
+    // Hàm để tải và hiển thị tất cả thời khóa biểu
+    function renderAllSchedules(userRole) {
+        const khoiList = ['khoi6', 'khoi7', 'khoi8', 'khoi9', 'khoi10']; // Các khối cần hiển thị
 
-    // Chuyển đổi các chuỗi thời gian thành chỉ số tương ứng trong mảng 'periods'
-    const periodIndices = selectedPeriods.map(time => periods.findIndex(p => p.time === time)).filter(index => index !== -1);
-
-    if (periodIndices.length === 0) {
-        console.warn("Không có khung giờ hợp lệ nào được chọn để lọc.");
-        return { total: 0, byKhoi: {} };
-    }
-    if (selectedDayIndices.length === 0) {
-        console.warn("Không có ngày nào được chọn để lọc.");
-        return { total: 0, byKhoi: {} };
+        khoiList.forEach(khoiId => {
+            renderSchedule(khoiId, userRole);
+        });
     }
 
-    const khois = ['khoi6', 'khoi7', 'khoi8', 'khoi9', 'khoi10'];
+    // Hàm để xóa tất cả thời khóa biểu trên giao diện
+    function clearAllSchedules() {
+        const khoiList = ['khoi6', 'khoi7', 'khoi8', 'khoi9', 'khoi10'];
+        khoiList.forEach(khoiId => {
+            const tbody = document.getElementById(`schedule-body-${khoiId}`);
+            if (tbody) {
+                tbody.innerHTML = '';
+            }
+        });
+        allSchedulesData = {}; // Xóa dữ liệu đã tải
+    }
 
-    for (const khoiId of khois) {
-        classesByKhoi[khoiId] = 0; // Khởi tạo số lớp cho khối này
-
+    // Chức năng chỉnh sửa ô thời khóa biểu (hàm toàn cục để có thể gọi từ HTML)
+    window.editCell = async function (periodIdx, dayIdx, khoiId) {
         try {
             const docRef = db.collection("schedules").doc(khoiId);
             const doc = await docRef.get();
+            if (!doc.exists) {
+                console.error(`Tài liệu cho ${khoiId} không tồn tại.`);
+                alert("Lỗi: Không tìm thấy dữ liệu thời khóa biểu cho khối này.");
+                return;
+            }
 
-            if (doc.exists && doc.data().data) {
-                const data = doc.data().data;
+            let data = doc.data().data; // Lấy mảng 'data'
+            
+            // Kiểm tra an toàn trước khi truy cập
+            if (!data || !Array.isArray(data) || periodIdx >= data.length || !data[periodIdx][`day${dayIdx}`]) {
+                console.error(`Cấu trúc dữ liệu cho ${khoiId} không hợp lệ hoặc chỉ số periodIdx (${periodIdx}) hoặc dayIdx (${dayIdx}) nằm ngoài giới hạn.`);
+                alert("Lỗi: Cấu trúc dữ liệu thời khóa biểu không hợp lệ hoặc dữ liệu bị thiếu. Vui lòng thử lại.");
+                // Gọi lại renderSchedule để trigger việc khởi tạo/sửa cấu trúc
+                renderSchedule(khoiId, auth.currentUser ? (await db.collection('users').doc(auth.currentUser.uid).get()).data().role : 'viewer');
+                return;
+            }
 
-                // Duyệt qua từng khung giờ được chọn
-                for (const pIdx of periodIndices) {
-                    // Kiểm tra xem dữ liệu cho khung giờ này có tồn tại và là một đối tượng không
-                    if (data[pIdx] && typeof data[pIdx] === 'object') {
-                        // Duyệt qua từng ngày được chọn
-                        for (const dIdx of selectedDayIndices) {
-                            const lessons = data[pIdx][`day${dIdx}`] || [];
-                            classesByKhoi[khoiId] += lessons.length;
-                            totalClasses += lessons.length;
-                        }
-                    } else {
-                        // Cảnh báo nếu dữ liệu cho một khung giờ cụ thể bị thiếu hoặc sai định dạng
-                        console.warn(`Dữ liệu cho khung giờ (index: ${pIdx}) của ${khoiId} không tồn tại hoặc không đúng định dạng.`);
+            const currentLessons = data[periodIdx][`day${dayIdx}`] || [];
+            const currentInput = currentLessons.map(l => `${l.subject}, ${l.teacher}`).join('; ');
+            const inputPrompt = prompt("Nhập môn, giáo viên (vd: Toán, Thầy A; Lý, Cô B):", currentInput);
+
+            if (inputPrompt === null) return; // Người dùng nhấn Hủy
+
+            const newLessons = inputPrompt.split(';').map(s => {
+                const parts = s.split(',').map(p => p.trim());
+                const subject = parts[0] || '';
+                const teacher = parts[1] || '';
+                return { subject: subject, teacher: teacher };
+            }).filter(l => l.subject); // Lọc bỏ các mục không có môn học
+
+            // Cập nhật dữ liệu và lưu vào Firestore
+            data[periodIdx][`day${dayIdx}`] = newLessons;
+            await docRef.set({ data: data }, { merge: true }); // Cập nhật trường 'data'
+            console.log(`Đã cập nhật ô [period: ${periodIdx}][day: ${dayIdx}] của ${khoiId}`);
+        } catch (error) {
+            console.error("Lỗi khi chỉnh sửa ô:", error);
+            alert(`Lỗi khi cập nhật thời khóa biểu: ${getAuthErrorMessage(error.code) || error.message}`);
+        }
+    };
+
+    // Xử lý nút "Bỏ chọn tất cả khung giờ"
+    btnClearPeriods.addEventListener('click', () => {
+        setAllCheckboxes(periodCheckboxesDiv, false);
+    });
+
+    // Xử lý nút "Chọn tất cả khung giờ"
+    btnSelectAllPeriods.addEventListener('click', () => {
+        setAllCheckboxes(periodCheckboxesDiv, true);
+    });
+
+    // Xử lý nút "Bỏ chọn tất cả ngày"
+    btnClearDays.addEventListener('click', () => {
+        setAllCheckboxes(dayCheckboxesDiv, false);
+    });
+
+    // Xử lý nút "Chọn tất cả ngày"
+    btnSelectAllDays.addEventListener('click', () => {
+        setAllCheckboxes(dayCheckboxesDiv, true);
+    });
+
+    // Hàm lọc thời khóa biểu và hiển thị kết quả
+    btnFilter.addEventListener('click', () => {
+        const selectedPeriodTimes = Array.from(periodCheckboxesDiv.querySelectorAll('input[type="checkbox"]:checked'))
+                                     .map(cb => cb.value);
+        const selectedDayIndices = Array.from(dayCheckboxesDiv.querySelectorAll('input[type="checkbox"]:checked'))
+                                      .map(cb => parseInt(cb.value, 10)); // Chỉ số ngày 0-6
+
+        let totalClasses = 0;
+        const classesByKhoi = {};
+
+        // Duyệt qua từng khối trong allSchedulesData
+        for (const khoiId in allSchedulesData) {
+            const scheduleDataArray = allSchedulesData[khoiId]; // Đây là mảng dữ liệu thời khóa biểu cho khối
+            let khoiClassCount = 0;
+            const khoiNameFormatted = khoiId.replace('khoi', 'Khối ');
+
+            // Lặp qua từng period (hàng) theo chỉ số
+            periods.forEach((periodObj, pIdx) => {
+                if (selectedPeriodTimes.includes(periodObj.time)) { // Chỉ xem xét các khung giờ được chọn
+                    // Truy cập dữ liệu cho period này (là một đối tượng {day0: [], day1: []...})
+                    const periodRowData = scheduleDataArray[pIdx]; 
+
+                    if (periodRowData) {
+                        // Lặp qua các ngày được chọn
+                        selectedDayIndices.forEach(dIdx => {
+                            const lessons = periodRowData[`day${dIdx}`] || [];
+                            khoiClassCount += lessons.length; // Đếm số lớp trong ô này
+                        });
                     }
                 }
-            } else {
-                console.log(`Không có dữ liệu thời khóa biểu ban đầu cho ${khoiId} hoặc document không tồn tại.`);
+            });
+            
+            if (khoiClassCount > 0) {
+                classesByKhoi[khoiNameFormatted] = khoiClassCount;
+                totalClasses += khoiClassCount;
             }
-        } catch (error) {
-            console.error(`Lỗi khi đếm lớp cho ${khoiId} với các bộ lọc đã chọn:`, error);
         }
-    }
 
-    return { total: totalClasses, byKhoi: classesByKhoi };
-}
-
-
-// Xử lý sự kiện khi nút lọc được nhấn
-btnFilter.addEventListener("click", async () => {
-    // Lấy các khung giờ được chọn từ checkbox
-    const selectedPeriodInputs = Array.from(periodCheckboxesDiv.querySelectorAll('input[type="checkbox"]:checked'));
-    const selectedPeriodTimes = selectedPeriodInputs.map(input => input.value);
-
-    // Lấy các ngày được chọn từ checkbox
-    const selectedDayInputs = Array.from(dayCheckboxesDiv.querySelectorAll('input[type="checkbox"]:checked'));
-    const selectedDayIndices = selectedDayInputs.map(input => parseInt(input.value, 10));
-
-    if (selectedPeriodTimes.length === 0 && selectedDayIndices.length === 0) {
-        alert("Vui lòng chọn ít nhất một khung giờ hoặc một ngày để lọc.");
-        filterResultsDiv.style.display = 'none';
-        return;
-    }
-    
-    // Nếu không chọn khung giờ nào, giả định tất cả khung giờ
-    const periodsToFilter = selectedPeriodTimes.length > 0 ? selectedPeriodTimes : periods.map(p => p.time);
-    // Nếu không chọn ngày nào, giả định tất cả các ngày
-    const daysToFilter = selectedDayIndices.length > 0 ? selectedDayIndices : Array.from({length: COLS}, (_, i) => i);
-
-
-    const result = await countClassesInMultiplePeriodsAndDays(periodsToFilter, daysToFilter);
-    
-    totalClassesCountSpan.textContent = result.total;
-    classesByKhoiList.innerHTML = ''; // Xóa danh sách cũ
-
-    if (result.total === 0) {
-        const listItem = document.createElement('li');
-        listItem.textContent = 'Không có lớp học nào khớp với tiêu chí lọc.';
-        classesByKhoiList.appendChild(listItem);
-    } else {
-        for (const khoi in result.byKhoi) {
-            const listItem = document.createElement('li');
-            listItem.textContent = `Khối ${khoi.replace('khoi', '')}: ${result.byKhoi[khoi]} lớp`;
-            classesByKhoiList.appendChild(listItem);
+        totalClassesCountSpan.textContent = totalClasses;
+        classesByKhoiList.innerHTML = '';
+        if (totalClasses > 0) {
+            for (const khoiName in classesByKhoi) {
+                const li = document.createElement('li');
+                li.textContent = `${khoiName}: ${classesByKhoi[khoiName]} lớp`;
+                classesByKhoiList.appendChild(li);
+            }
+        } else {
+            const li = document.createElement('li');
+            li.textContent = 'Không có lớp nào trong các lựa chọn này.';
+            classesByKhoiList.appendChild(li);
         }
-    }
-    filterResultsDiv.style.display = 'block'; // Hiển thị khu vực kết quả
-});
+
+        filterResultsDiv.style.display = 'block'; // Hiển thị kết quả lọc
+        searchResultsTeacherDiv.style.display = 'none'; // Ẩn kết quả tìm kiếm giáo viên
+    });
+
+    // Hàm tìm kiếm giáo viên và hiển thị kết quả
+    btnSearchTeacher.addEventListener('click', () => {
+        const searchTeacherName = teacherNameInput.value.trim();
+        if (!searchTeacherName) {
+            alert('Vui lòng nhập tên giáo viên để tìm kiếm.');
+            return;
+        }
+
+        let teacherFound = false;
+        let foundClassesCount = 0;
+        teacherClassesList.innerHTML = ''; // Xóa kết quả cũ
+        filterResultsDiv.style.display = 'none'; // Ẩn kết quả lọc tổng số lớp
+
+        const results = [];
+
+        // Lặp qua tất cả dữ liệu thời khóa biểu của các khối
+        for (const khoiId in allSchedulesData) {
+            const scheduleDataArray = allSchedulesData[khoiId]; // Mảng dữ liệu thời khóa biểu cho khối
+            const khoiNameFormatted = khoiId.replace('khoi', 'Khối ');
+
+            // Lặp qua từng period (hàng) theo chỉ số
+            scheduleDataArray.forEach((periodRowData, pIdx) => {
+                // Lặp qua từng ngày trong tuần (day0 đến day6)
+                for (let dIdx = 0; dIdx < COLS; dIdx++) {
+                    const lessons = periodRowData[`day${dIdx}`] || [];
+                    
+                    lessons.forEach(lesson => {
+                        // Kiểm tra xem tên giáo viên có khớp (không phân biệt hoa thường)
+                        if (lesson && lesson.teacher && lesson.teacher.toLowerCase().includes(searchTeacherName.toLowerCase())) {
+                            teacherFound = true;
+                            foundClassesCount++;
+                            results.push({
+                                khoi: khoiNameFormatted,
+                                day: days[dIdx], // Chuyển chỉ số ngày thành tên ngày (Thứ 2, Thứ 3,...)
+                                period: periods[pIdx].time, // Lấy chuỗi thời gian từ mảng periods
+                                subject: lesson.subject,
+                                teacher: lesson.teacher
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        // Sắp xếp kết quả: Khối -> Ngày -> Tiết
+        results.sort((a, b) => {
+            // Sắp xếp theo khối (vd: Khối 6, Khối 7, ...)
+            const khoiNumA = parseInt(a.khoi.replace('Khối ', ''));
+            const khoiNumB = parseInt(b.khoi.replace('Khối ', ''));
+            if (khoiNumA !== khoiNumB) return khoiNumA - khoiNumB;
+
+            // Sắp xếp theo ngày (Thứ 2 đến CN)
+            const dayOrder = days.indexOf(a.day) - days.indexOf(b.day);
+            if (dayOrder !== 0) return dayOrder;
+
+            // Sắp xếp theo tiết (thời gian) - dựa vào thứ tự trong mảng periods
+            const periodOrderA = periods.findIndex(p => p.time === a.period);
+            const periodOrderB = periods.findIndex(p => p.time === b.period);
+            return periodOrderA - periodOrderB;
+        });
 
 
-// Event listeners cho các nút chọn/bỏ chọn tất cả
-btnClearPeriods.addEventListener("click", () => {
-    setAllCheckboxes(periodCheckboxesDiv, false);
-});
+        foundTeacherNameSpan.textContent = searchTeacherName;
+        totalTeacherClassesCountSpan.textContent = foundClassesCount;
 
-btnSelectAllPeriods.addEventListener("click", () => {
-    setAllCheckboxes(periodCheckboxesDiv, true);
-});
+        if (results.length > 0) {
+            results.forEach(item => {
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${item.subject}</strong> (${item.teacher}) - ${item.khoi} - ${item.day} (${item.period})`;
+                teacherClassesList.appendChild(li);
+            });
+        } else {
+            const li = document.createElement('li');
+            li.textContent = `Không tìm thấy lớp nào cho giáo viên "${searchTeacherName}".`;
+            teacherClassesList.appendChild(li);
+        }
 
-btnClearDays.addEventListener("click", () => {
-    setAllCheckboxes(dayCheckboxesDiv, false);
-});
-
-btnSelectAllDays.addEventListener("click", () => {
-    setAllCheckboxes(dayCheckboxesDiv, true);
+        searchResultsTeacherDiv.style.display = 'block'; // Hiển thị kết quả tìm kiếm giáo viên
+    });
 });
