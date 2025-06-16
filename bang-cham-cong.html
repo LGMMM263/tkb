@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng Chấm Công - Trung tâm Aris</title>
+    <link rel="stylesheet" href="bang-cham-cong.css">
+</head>
+<body>
+    <header>
+        <h1>Trung tâm Aris</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">Trang chủ</a></li> 
+                <li><a href="tkb.html">Thời khóa biểu</a></li>
+                <li><a href="giao-vien.html">Thông tin giáo viên</a></li>
+                <li><a href="hoc-sinh-phu-huynh.html">Thông tin học sinh/phu-huynh</a></li>
+                <li><a href="nhan-vien.html">Thông tin nhân viên</a></li>
+                <li><a href="bang-cham-cong.html">Bảng chấm công</a></li>
+                <li><a href="du-kien-khai-giang.html">Dự kiến khai giảng</a></li>
+                <li><a href="danh-sach-cho.html">Danh sách chờ xếp lớp</a></li>
+            </ul>
+        </nav>
+        <div id="user-info" style="display: none;">
+            <span>Chào mừng, <strong id="user-email"></strong>!</span>
+            <button id="btn-logout">Đăng xuất</button>
+        </div>
+    </header>
+
+    <main>
+        <section class="page-content">
+            <h2>Bảng Chấm Công Tháng 6/2025</h2>
+
+            <div class="filter-controls">
+                <label for="month-select">Chọn tháng:</label>
+                <select id="month-select">
+                    <option value="01">Tháng 1</option>
+                    <option value="02">Tháng 2</option>
+                    <option value="03">Tháng 3</option>
+                    <option value="04">Tháng 4</option>
+                    <option value="05">Tháng 5</option>
+                    <option value="06" selected>Tháng 6</option>
+                    <option value="07">Tháng 7</option>
+                    <option value="08">Tháng 8</option>
+                    <option value="09">Tháng 9</option>
+                    <option value="10">Tháng 10</option>
+                    <option value="11">Tháng 11</option>
+                    <option value="12">Tháng 12</option>
+                </select>
+
+                <label for="employee-filter-select">Chọn nhân viên:</label>
+                <select id="employee-filter-select">
+                    <option value="">Tất cả</option>
+                    </select>
+                <button class="btn primary">Xem bảng công</button>
+            </div>
+
+            <div class="table-container">
+                <table class="attendance-table" id="attendance-data-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">STT</th>
+                            <th rowspan="2">Họ và tên</th>
+                            <th colspan="31">Ngày trong tháng</th>
+                            <th rowspan="2">Tổng ngày công</th>
+                            <th rowspan="2">Ghi chú</th>
+                        </tr>
+                        <tr id="days-header-row">
+                            </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+
+            <p class="legend">
+                <strong>Chú thích:</strong> X = Có mặt | P = Nghỉ phép | K = Nghỉ không lương | O = Nghỉ ốm | C = Công tác
+            </p>
+
+            <hr style="margin: 40px 0;">
+
+            <h3>Thêm Chấm Công Mới</h3>
+            <div class="add-attendance-form">
+                <div class="input-group">
+                    <label for="new-employee-name">Họ và tên:</label>
+                    <input type="text" id="new-employee-name" placeholder="Tên nhân viên" required>
+                </div>
+                <div class="input-group">
+                    <label for="new-date">Ngày:</label>
+                    <input type="date" id="new-date" required>
+                </div>
+                <div class="input-group">
+                    <label for="new-status">Trạng thái:</label>
+                    <select id="new-status" required>
+                        <option value="X">Có mặt (X)</option>
+                        <option value="P">Nghỉ phép (P)</option>
+                        <option value="K">Nghỉ không lương (K)</option>
+                        <option value="O">Nghỉ ốm (O)</option>
+                        <option value="C">Công tác (C)</option>
+                    </select>
+                </div>
+                 <div class="input-group">
+                    <label for="new-note">Ghi chú (Tùy chọn):</label>
+                    <input type="text" id="new-note" placeholder="Ghi chú thêm">
+                </div>
+                <button id="add-attendance-btn" class="btn primary">Thêm Chấm Công</button>
+                <p id="add-attendance-error" class="error-message"></p>
+            </div>
+
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Trung tâm Aris</p>
+    </footer>
+
+    <script src="config.js" type="module"></script>
+    <script src="bang-cham-cong.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,436 @@
+/* Thiết lập CSS cơ bản cho toàn bộ trang */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Font chữ hiện đại hơn */
+    margin: 0;
+    padding: 0;
+    background-color: #eef2f6; /* Nền màu xám nhạt */
+    color: #333;
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column; /* Để footer luôn ở cuối trang */
+    min-height: 100vh; /* Đảm bảo body chiếm toàn bộ chiều cao viewport */
+}
+
+/* Định dạng phần header */
+header {
+    background-color: #28a745; /* Màu xanh lá cây đậm */
+    color: white;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    display: flex; /* Dùng flexbox cho header */
+    flex-direction: column; /* Xếp các mục theo cột */
+    align-items: center; /* Căn giữa các mục */
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2.2rem;
+    letter-spacing: 1px;
+}
+
+/* Định dạng thanh điều hướng (navigation) */
+nav {
+    margin-top: 15px;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex; /* Hiển thị các mục menu trên một hàng */
+    justify-content: center; /* Căn giữa các mục menu */
+    flex-wrap: wrap; /* Cho phép các mục xuống dòng trên màn hình nhỏ */
+}
+
+nav ul li {
+    margin: 0 15px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 8px 15px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+nav ul li a:hover,
+nav ul li a:focus {
+    background-color: rgba(255, 255, 255, 0.2); /* Nền hơi trong suốt khi hover */
+    transform: translateY(-2px); /* Hiệu ứng nổi nhẹ */
+}
+
+/* Định dạng thông tin người dùng và nút đăng xuất trong header */
+#user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 1rem;
+    margin-top: 15px; /* Khoảng cách với nav */
+    color: white; /* Đảm bảo text màu trắng */
+}
+
+#user-info strong {
+    font-weight: bold;
+}
+
+/* Định dạng phần nội dung chính */
+main {
+    flex-grow: 1; /* Cho phép main chiếm không gian còn lại */
+    padding: 30px 20px;
+    max-width: 1200px; /* Giới hạn chiều rộng nội dung */
+    margin: 20px auto; /* Căn giữa nội dung và tạo khoảng cách */
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* Định dạng các section cho nội dung trang (chung cho tất cả các trang con) */
+.page-content { /* Sử dụng class này cho tất cả các section nội dung chính */
+    margin-bottom: 40px; /* Khoảng cách giữa các phần */
+    padding: 25px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #fdfdfd;
+}
+
+.page-content:last-child {
+    margin-bottom: 0; /* Loại bỏ margin dưới cho section cuối cùng */
+}
+
+.page-content h2 {
+    color: #28a745;
+    font-size: 2rem;
+    margin-top: 0;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #28a745;
+    padding-bottom: 10px;
+    display: inline-block; /* Để border-bottom chỉ rộng bằng nội dung text */
+}
+
+.page-content h3 {
+    color: #4CAF50;
+    font-size: 1.5rem;
+    margin-top: 25px;
+    margin-bottom: 15px;
+}
+
+/* --- CSS cho Form Đăng nhập/Đăng ký (auth-section) --- */
+.auth-container {
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    margin: auto; /* Căn giữa form trên trang login */
+}
+
+.auth-container h2 {
+    color: #4CAF50;
+    margin-bottom: 25px;
+    font-size: 1.5rem;
+    border-bottom: none; /* Không có border-bottom cho tiêu đề form */
+    padding-bottom: 0;
+}
+
+.input-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #555;
+}
+
+.input-group input {
+    width: calc(100% - 20px);
+    padding: 12px 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+    box-sizing: border-box; /* Đảm bảo padding không làm tăng tổng chiều rộng */
+}
+
+.input-group input:focus {
+    border-color: #4CAF50;
+    outline: none;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+}
+
+.button-group {
+    margin-top: 25px;
+    display: flex;
+    justify-content: space-around;
+    gap: 15px; /* Khoảng cách giữa các nút */
+}
+
+/* Các nút chung */
+.btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    flex: 1; /* Để các nút có chiều rộng bằng nhau */
+}
+
+.btn.primary {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.btn.primary:hover {
+    background-color: #45a049;
+    transform: translateY(-2px);
+}
+
+.btn.secondary {
+    background-color: #f0f0f0;
+    color: #555;
+    border: 1px solid #ccc;
+}
+
+.btn.secondary:hover {
+    background-color: #e0e0e0;
+    transform: translateY(-2px);
+}
+
+.error-message {
+    color: #d32f2f;
+    margin-top: 15px;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+/* --- CSS cho Bảng Chấm Công --- */
+
+.filter-controls {
+    margin-bottom: 25px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    display: flex;
+    flex-wrap: wrap; /* Cho phép các phần tử xuống dòng */
+    gap: 15px; /* Khoảng cách giữa các phần tử */
+    align-items: center;
+    justify-content: center;
+}
+
+.filter-controls label {
+    font-weight: bold;
+    color: #555;
+}
+
+.filter-controls select,
+.filter-controls button {
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    background-color: white;
+    box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước tổng thể */
+}
+
+.filter-controls select:focus,
+.filter-controls button:focus {
+    border-color: #28a745;
+    outline: none;
+    box-shadow: 0 0 5px rgba(40, 167, 69, 0.3);
+}
+
+.filter-controls button.btn { /* Sử dụng lại style .btn từ CSS chung */
+    background-color: #28a745;
+    color: white;
+    border: none;
+}
+
+.filter-controls button.btn:hover {
+    background-color: #218838;
+}
+
+
+.table-container {
+    overflow-x: auto; /* Cho phép cuộn ngang nếu bảng quá rộng */
+    margin-top: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.attendance-table {
+    width: 100%;
+    border-collapse: collapse; /* Gộp các đường viền của ô */
+    min-width: 800px; /* Đảm bảo bảng có chiều rộng tối thiểu để nội dung không bị dồn */
+}
+
+.attendance-table th,
+.attendance-table td {
+    border: 1px solid #e0e0e0;
+    padding: 12px 8px;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap; /* Ngăn không cho nội dung cuộn xuống dòng */
+}
+
+.attendance-table thead {
+    background-color: #e6ffe6; /* Nền xanh nhạt cho header */
+    color: #28a745;
+}
+
+.attendance-table th {
+    font-weight: bold;
+    font-size: 0.95rem;
+    padding: 15px 8px;
+}
+
+.attendance-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9; /* Zenbra-striping cho hàng chẵn */
+}
+
+.attendance-table tbody tr:hover {
+    background-color: #f0faff; /* Hiệu ứng hover cho hàng */
+}
+
+.legend {
+    margin-top: 25px;
+    padding: 15px;
+    background-color: #fffacd; /* Màu vàng nhạt */
+    border: 1px solid #ffd700;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.95rem;
+    color: #6a5300;
+}
+
+/* Định dạng phần footer */
+footer {
+    background-color: #343a40; /* Màu xám đen */
+    color: white;
+    text-align: center;
+    padding: 1.2rem;
+    margin-top: auto; /* Đẩy footer xuống cuối trang */
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Responsive Design (Điểm dừng 768px) --- */
+@media (max-width: 768px) {
+    header {
+        padding: 1rem 1rem;
+    }
+
+    header h1 {
+        font-size: 1.8rem;
+    }
+
+    nav ul {
+        flex-direction: column; /* Sắp xếp các mục menu theo cột */
+        align-items: center; /* Căn giữa các mục */
+    }
+
+    nav ul li {
+        margin: 8px 0; /* Điều chỉnh khoảng cách dọc */
+    }
+
+    #user-info {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    main {
+        padding: 20px 10px;
+        margin: 15px auto;
+    }
+
+    .auth-container {
+        padding: 20px;
+        margin: 10px;
+    }
+
+    .button-group {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .btn {
+        width: 100%;
+    }
+
+    .page-content {
+        padding: 15px;
+        margin-bottom: 30px;
+    }
+
+    .page-content h2 {
+        font-size: 1.8rem;
+    }
+
+    .page-content h3 {
+        font-size: 1.3rem;
+    }
+
+    .filter-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .filter-controls select,
+    .filter-controls button {
+        width: 100%;
+    }
+    /* min-width trên .attendance-table sẽ đảm bảo bảng cuộn thay vì co lại quá mức */
+}
+
+/* --- Responsive Design (Điểm dừng 480px) --- */
+@media (max-width: 480px) {
+    header h1 {
+        font-size: 1.5rem;
+    }
+
+    nav ul li a {
+        padding: 6px 10px;
+        font-size: 0.9rem;
+    }
+
+    main {
+        padding: 15px 5px;
+        margin: 10px auto;
+    }
+
+    .page-content h2 {
+        font-size: 1.6rem;
+    }
+
+    .page-content h3 {
+        font-size: 1.2rem;
+    }
+    /* CSS cho trạng thái chấm công trong bảng */
+.attendance-table td.status-P {
+    background-color: #ffeb3b; /* Màu vàng cho nghỉ phép */
+    font-weight: bold;
+}
+.attendance-table td.status-K {
+    background-color: #ffcdd2; /* Màu đỏ nhạt cho nghỉ không lương */
+    font-weight: bold;
+    color: #d32f2f;
+}
+.attendance-table td.status-O {
+    background-color: #bbdefb; /* Màu xanh nhạt cho nghỉ ốm */
+    font-weight: bold;
+}
+.attendance-table td.status-C {
+    background-color: #c8e6c9; /* Màu xanh lá cây nhạt cho công tác */
+    font-weight: bold;
+}
+.attendance-table td.status-X {
+    /* background-color: #e8f5e9; Màu xanh rất nhạt cho có mặt nếu muốn */
+}
+}

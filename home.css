@@ -1,0 +1,174 @@
+/* Thiết lập CSS cơ bản cho toàn bộ trang */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Font chữ hiện đại hơn */
+    margin: 0;
+    padding: 0;
+    background-color: #eef2f6; /* Nền màu xám nhạt */
+    color: #333;
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column; /* Để footer luôn ở cuối trang */
+    min-height: 100vh; /* Đảm bảo body chiếm toàn bộ chiều cao viewport */
+}
+
+/* Định dạng phần header */
+header {
+    background-color: #28a745; /* Màu xanh lá cây đậm */
+    color: white;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2.2rem;
+    letter-spacing: 1px;
+}
+
+/* Định dạng thanh điều hướng (navigation) */
+nav {
+    margin-top: 15px;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex; /* Hiển thị các mục menu trên một hàng */
+    justify-content: center; /* Căn giữa các mục menu */
+    flex-wrap: wrap; /* Cho phép các mục xuống dòng trên màn hình nhỏ */
+}
+
+nav ul li {
+    margin: 0 15px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 8px 15px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+nav ul li a:hover,
+nav ul li a:focus {
+    background-color: rgba(255, 255, 255, 0.2); /* Nền hơi trong suốt khi hover */
+    transform: translateY(-2px); /* Hiệu ứng nổi nhẹ */
+}
+
+/* Định dạng phần nội dung chính */
+main {
+    flex-grow: 1; /* Cho phép main chiếm không gian còn lại */
+    padding: 30px 20px;
+    max-width: 1200px; /* Giới hạn chiều rộng nội dung */
+    margin: 20px auto; /* Căn giữa nội dung và tạo khoảng cách */
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* Định dạng các section */
+section {
+    margin-bottom: 40px; /* Khoảng cách giữa các phần */
+    padding: 25px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #fdfdfd;
+}
+
+section:last-child {
+    margin-bottom: 0; /* Loại bỏ margin dưới cho section cuối cùng */
+}
+
+section h2 {
+    color: #28a745;
+    font-size: 2rem;
+    margin-top: 0;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #28a745;
+    padding-bottom: 10px;
+    display: inline-block; /* Để border-bottom chỉ rộng bằng nội dung text */
+}
+
+section h3 {
+    color: #4CAF50;
+    font-size: 1.5rem;
+    margin-top: 25px;
+    margin-bottom: 15px;
+}
+
+/* Định dạng phần footer */
+footer {
+    background-color: #343a40; /* Màu xám đen */
+    color: white;
+    text-align: center;
+    padding: 1.2rem;
+    margin-top: auto; /* Đẩy footer xuống dưới */
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Responsive Design (Điểm dừng 768px) --- */
+@media (max-width: 768px) {
+    header {
+        padding: 1rem 1rem;
+    }
+
+    header h1 {
+        font-size: 1.8rem;
+    }
+
+    nav ul {
+        flex-direction: column; /* Sắp xếp các mục menu theo cột */
+        align-items: center; /* Căn giữa các mục */
+    }
+
+    nav ul li {
+        margin: 8px 0; /* Điều chỉnh khoảng cách dọc */
+    }
+
+    main {
+        padding: 20px 10px;
+        margin: 15px auto;
+    }
+
+    section {
+        padding: 15px;
+        margin-bottom: 30px;
+    }
+
+    section h2 {
+        font-size: 1.8rem;
+    }
+
+    section h3 {
+        font-size: 1.3rem;
+    }
+}
+
+/* --- Responsive Design (Điểm dừng 480px) --- */
+@media (max-width: 480px) {
+    header h1 {
+        font-size: 1.5rem;
+    }
+
+    nav ul li a {
+        padding: 6px 10px;
+        font-size: 0.9rem;
+    }
+
+    main {
+        padding: 15px 5px;
+        margin: 10px auto;
+    }
+
+    section h2 {
+        font-size: 1.6rem;
+    }
+
+    section h3 {
+        font-size: 1.2rem;
+    }
+}
