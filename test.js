@@ -281,8 +281,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     for (let d = 0; d < COLS; d++) {
                         // Cố gắng bảo toàn dữ liệu hiện có cho từng ô nếu nó tồn tại và hợp lệ
                         row[`day${d}`] = (dataFromFirestore[pIdx] && dataFromFirestore[pIdx][`day${d}`] && Array.isArray(dataFromFirestore[pIdx][`day${d}`]))
-                                        ? dataFromFirestore[pIdx][`day${d}`]
-                                        : [];
+                                                ? dataFromFirestore[pIdx][`day${d}`]
+                                                : [];
                     }
                     return row;
                 });
@@ -311,8 +311,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     for (let d = 0; d < COLS; d++) { // d là chỉ số ngày (0-6) tương ứng với Thứ 2 - CN
                         // Truy cập dữ liệu từ dataFromFirestore[periodIndexInOverallPeriods][`day${d}`]
                         const lessons = dataFromFirestore[periodIndexInOverallPeriods] && dataFromFirestore[periodIndexInOverallPeriods][`day${d}`]
-                                        ? dataFromFirestore[periodIndexInOverallPeriods][`day${d}`]
-                                        : [];
+                                                ? dataFromFirestore[periodIndexInOverallPeriods][`day${d}`]
+                                                : [];
                         
                         let content = lessons.length ?
                             lessons.map(l => `<strong>${l.subject}</strong><br><small>${l.teacher}</small>`).join('<br>') :
@@ -426,49 +426,123 @@ document.addEventListener('DOMContentLoaded', () => {
     // Hàm lọc thời khóa biểu và hiển thị kết quả
     btnFilter.addEventListener('click', () => {
         const selectedPeriodTimes = Array.from(periodCheckboxesDiv.querySelectorAll('input[type="checkbox"]:checked'))
-                                     .map(cb => cb.value);
+                                           .map(cb => cb.value);
         const selectedDayIndices = Array.from(dayCheckboxesDiv.querySelectorAll('input[type="checkbox"]:checked'))
-                                      .map(cb => parseInt(cb.value, 10)); // Chỉ số ngày 0-6
+                                           .map(cb => parseInt(cb.value, 10)); // Chỉ số ngày 0-6
 
         let totalClasses = 0;
-        const classesByKhoi = {};
+        const filteredClassDetails = []; 
 
         // Duyệt qua từng khối trong allSchedulesData
         for (const khoiId in allSchedulesData) {
-            const scheduleDataArray = allSchedulesData[khoiId]; // Đây là mảng dữ liệu thời khóa biểu cho khối
-            let khoiClassCount = 0;
+            const scheduleDataArray = allSchedulesData[khoiId]; 
             const khoiNameFormatted = khoiId.replace('khoi', 'Khối ');
 
             // Lặp qua từng period (hàng) theo chỉ số
             periods.forEach((periodObj, pIdx) => {
-                if (selectedPeriodTimes.includes(periodObj.time)) { // Chỉ xem xét các khung giờ được chọn
-                    // Truy cập dữ liệu cho period này (là một đối tượng {day0: [], day1: []...})
+                if (selectedPeriodTimes.includes(periodObj.time)) { 
                     const periodRowData = scheduleDataArray[pIdx]; 
 
                     if (periodRowData) {
                         // Lặp qua các ngày được chọn
                         selectedDayIndices.forEach(dIdx => {
                             const lessons = periodRowData[`day${dIdx}`] || [];
-                            khoiClassCount += lessons.length; // Đếm số lớp trong ô này
+                            lessons.forEach(lesson => {
+                                if (lesson && lesson.subject) { // Đảm bảo có môn học để hiển thị
+                                    filteredClassDetails.push({
+                                        subject: lesson.subject,
+                                        teacher: lesson.teacher,
+                                        khoi: khoiNameFormatted,
+                                        day: days[dIdx], // Tên ngày (Thứ 2, Thứ 3, ...)
+                                        period: periodObj.time, // Khung giờ
+                                        periodGroup: getPeriodGroup(periodObj.time) // Thêm thông tin nhóm buổi
+                                    });
+                                    totalClasses++;
+                                }
+                            });
                         });
                     }
                 }
             });
-            
-            if (khoiClassCount > 0) {
-                classesByKhoi[khoiNameFormatted] = khoiClassCount;
-                totalClasses += khoiClassCount;
-            }
         }
 
         totalClassesCountSpan.textContent = totalClasses;
-        classesByKhoiList.innerHTML = '';
-        if (totalClasses > 0) {
-            for (const khoiName in classesByKhoi) {
-                const li = document.createElement('li');
-                li.textContent = `${khoiName}: ${classesByKhoi[khoiName]} lớp`;
-                classesByKhoiList.appendChild(li);
-            }
+        classesByKhoiList.innerHTML = ''; // Xóa nội dung cũ
+
+        if (filteredClassDetails.length > 0) {
+            // Sắp xếp kết quả: Buổi -> Khối -> Ngày -> Tiết
+            filteredClassDetails.sort((a, b) => {
+                // Sắp xếp theo Buổi (Morning, Afternoon, Evening)
+                const groupOrder = ['Buổi Sáng', 'Buổi Chiều', 'Buổi Tối'];
+                const groupIdxA = groupOrder.indexOf(a.periodGroup);
+                const groupIdxB = groupOrder.indexOf(b.periodGroup);
+                if (groupIdxA !== groupIdxB) return groupIdxA - groupIdxB;
+
+                // Sắp xếp theo khối (vd: Khối 6, Khối 7, ...)
+                const khoiNumA = parseInt(a.khoi.replace('Khối ', ''));
+                const khoiNumB = parseInt(b.khoi.replace('Khối ', ''));
+                if (khoiNumA !== khoiNumB) return khoiNumA - khoiNumB;
+
+                // Sắp xếp theo ngày (Thứ 2 đến CN)
+                const dayOrder = days.indexOf(a.day) - days.indexOf(b.day);
+                if (dayOrder !== 0) return dayOrder;
+
+                // Sắp xếp theo tiết (thời gian) - dựa vào thứ tự trong mảng periods
+                const periodOrderA = periods.findIndex(p => p.time === a.period);
+                const periodOrderB = periods.findIndex(p => p.time === b.period);
+                return periodOrderA - periodOrderB;
+            });
+
+            // Nhóm kết quả theo Buổi, sau đó trong mỗi buổi lại nhóm theo Khối
+            const groupedByPeriodAndKhoi = filteredClassDetails.reduce((acc, item) => {
+                if (!acc[item.periodGroup]) {
+                    acc[item.periodGroup] = {};
+                }
+                if (!acc[item.periodGroup][item.khoi]) {
+                    acc[item.periodGroup][item.khoi] = [];
+                }
+                acc[item.periodGroup][item.khoi].push(item);
+                return acc;
+            }, {});
+
+            // Duyệt và hiển thị kết quả đã nhóm
+            const groupOrder = ['Buổi Sáng', 'Buổi Chiều', 'Buổi Tối']; // Đảm bảo thứ tự hiển thị các buổi
+            groupOrder.forEach(groupName => {
+                if (groupedByPeriodAndKhoi[groupName]) {
+                    const groupLi = document.createElement('li');
+                    groupLi.innerHTML = `<h3>${groupName}:</h3>`;
+                    classesByKhoiList.appendChild(groupLi);
+
+                    const khoiUl = document.createElement('ul');
+                    khoiUl.style.listStyle = 'none';
+                    khoiUl.style.paddingLeft = '10px';
+                    groupLi.appendChild(khoiUl);
+
+                    // Sắp xếp khối trong mỗi buổi
+                    const sortedKhois = Object.keys(groupedByPeriodAndKhoi[groupName]).sort((a, b) => {
+                        const khoiNumA = parseInt(a.replace('Khối ', ''));
+                        const khoiNumB = parseInt(b.replace('Khối ', ''));
+                        return khoiNumA - khoiNumB;
+                    });
+
+                    sortedKhois.forEach(khoiName => {
+                        const khoiLi = document.createElement('li');
+                        khoiLi.innerHTML = `<strong>${khoiName} (${groupedByPeriodAndKhoi[groupName][khoiName].length} lớp):</strong>`;
+                        const ulDetail = document.createElement('ul');
+                        ulDetail.style.listStyle = 'none'; 
+                        ulDetail.style.paddingLeft = '15px'; 
+                        khoiLi.appendChild(ulDetail);
+
+                        groupedByPeriodAndKhoi[groupName][khoiName].forEach(item => {
+                            const liDetail = document.createElement('li');
+                            liDetail.textContent = `- ${item.subject} (${item.teacher}) - ${item.day} (${item.period})`;
+                            ulDetail.appendChild(liDetail);
+                        });
+                        khoiUl.appendChild(khoiLi);
+                    });
+                }
+            });
+
         } else {
             const li = document.createElement('li');
             li.textContent = 'Không có lớp nào trong các lựa chọn này.';
@@ -478,6 +552,19 @@ document.addEventListener('DOMContentLoaded', () => {
         filterResultsDiv.style.display = 'block'; // Hiển thị kết quả lọc
         searchResultsTeacherDiv.style.display = 'none'; // Ẩn kết quả tìm kiếm giáo viên
     });
+
+    // Hàm trợ giúp để xác định buổi từ khung giờ
+    function getPeriodGroup(time) {
+        if (periodsMorning.some(p => p.time === time)) {
+            return 'Buổi Sáng';
+        } else if (periodsAfternoon.some(p => p.time === time)) {
+            return 'Buổi Chiều';
+        } else if (periodsEvening.some(p => p.time === time)) {
+            return 'Buổi Tối';
+        }
+        return 'Không xác định'; // Trường hợp không khớp
+    }
+
 
     // Hàm tìm kiếm giáo viên và hiển thị kết quả
     btnSearchTeacher.addEventListener('click', () => {
