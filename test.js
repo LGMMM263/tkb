@@ -382,7 +382,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const currentLessons = data[periodIdx][`day${dayIdx}`] || [];
             const currentInput = currentLessons.map(l => `${l.subject}, ${l.teacher}`).join('; ');
-            const inputPrompt = prompt("Nhập môn, giáo viên (vd: Toán, Thầy A; Lý, Cô B):", currentInput);
+            // Cập nhật ví dụ nhập liệu để bao gồm tên lớp
+            const inputPrompt = prompt("Nhập môn, giáo viên (vd: Toán 9.3, Thầy A; Lý 9.4, Cô B):", currentInput);
 
             if (inputPrompt === null) return; // Người dùng nhấn Hủy
 
@@ -470,7 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
         classesByKhoiList.innerHTML = ''; // Xóa nội dung cũ
 
         if (filteredClassDetails.length > 0) {
-            // Sắp xếp kết quả: Buổi -> Khối -> Ngày -> Tiết
+            // Sắp xếp kết quả: Buổi -> Khối -> Ngày -> Tiết -> TÊN MÔN HỌC (Alpha B) -> TÊN GIÁO VIÊN (Alpha B)
             filteredClassDetails.sort((a, b) => {
                 // Sắp xếp theo Buổi (Morning, Afternoon, Evening)
                 const groupOrder = ['Buổi Sáng', 'Buổi Chiều', 'Buổi Tối'];
@@ -490,7 +491,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Sắp xếp theo tiết (thời gian) - dựa vào thứ tự trong mảng periods
                 const periodOrderA = periods.findIndex(p => p.time === a.period);
                 const periodOrderB = periods.findIndex(p => p.time === b.period);
-                return periodOrderA - periodOrderB;
+                if (periodOrderA !== periodOrderB) return periodOrderA - periodOrderB;
+
+                // Sắp xếp theo TÊN MÔN HỌC (ALPHABETICAL)
+                const subjectOrder = a.subject.localeCompare(b.subject);
+                if (subjectOrder !== 0) return subjectOrder;
+
+                // THÊM SẮP XẾP THEO TÊN GIÁO VIÊN (ALPHABETICAL)
+                return a.teacher.localeCompare(b.teacher);
             });
 
             // Nhóm kết quả theo Buổi, sau đó trong mỗi buổi lại nhóm theo Khối
@@ -565,6 +573,60 @@ document.addEventListener('DOMContentLoaded', () => {
         return 'Không xác định'; // Trường hợp không khớp
     }
 
+    // Hàm trích xuất tên lớp từ tên môn học
+    // Cố gắng bắt các định dạng: "Môn 9.3", "Môn 10A", "Môn 11B2", "Môn 12"
+    // Regex này ưu tiên bắt các số và/hoặc chữ cái cuối cùng của chuỗi, 
+    // giả định đó là tên lớp.
+    function extractClassName(subject) {
+        // Ví dụ: "Toán 9.3", "Văn 10A", "Lý 11B2", "Anh 12", "Hóa B"
+        // Regex này tìm kiếm:
+        // 1. Một hoặc nhiều chữ số, theo sau là dấu chấm, một hoặc nhiều chữ số (e.g., "9.3")
+        // 2. HOẶC một hoặc nhiều chữ số, theo sau là một chữ cái (có thể là chữ in hoa hoặc thường), sau đó là không hoặc nhiều chữ số (e.g., "10A", "11B2")
+        // 3. HOẶC một hoặc nhiều chữ số (e.g., "12")
+        // 4. HOẶC một hoặc nhiều chữ cái (e.g., "A", "B" - nếu tên lớp chỉ là chữ cái)
+        const match = subject.match(/(\d+\.\d+|\d+[a-zA-Z]\d*|\d+|[a-zA-Z]+)$/);
+        if (match) {
+            return match[1]; // Lấy nhóm khớp đầu tiên
+        }
+        return ''; // Không tìm thấy tên lớp cụ thể
+    }
+
+    // Hàm so sánh tên lớp cho việc sắp xếp
+    function compareClassNames(a, b) {
+        // Hàm trợ giúp để phân tích tên lớp thành các phần số và chữ
+        const parseClassName = (name) => {
+            // Tách phần số đầu tiên (ví dụ: 9 từ "9.3", 10 từ "10A")
+            const numMatch = name.match(/^\d+/); 
+            // Tách phần thập phân sau dấu chấm (ví dụ: 3 từ "9.3")
+            const decimalMatch = name.match(/\.(\d+)/); 
+            // Tách phần chữ cái sau số (ví dụ: A từ "10A", B2 từ "11B2")
+            const alphaNumSuffixMatch = name.match(/(\d*[a-zA-Z]+\d*)$/); // ví dụ: "A", "B2", "10A" (nếu không có số đầu tiên)
+
+            const numPart = numMatch ? parseInt(numMatch[0]) : 0;
+            const decimalPart = decimalMatch ? parseInt(decimalMatch[1]) : 0;
+            const alphaNumSuffix = alphaNumSuffixMatch ? alphaNumSuffixMatch[1].toLowerCase() : '';
+
+            return { num: numPart, decimal: decimalPart, suffix: alphaNumSuffix };
+        };
+
+        const parsedA = parseClassName(a);
+        const parsedB = parseClassName(b);
+
+        // 1. Ưu tiên so sánh phần số chính (vd: 9 trước 10)
+        if (parsedA.num !== parsedB.num) {
+            return parsedA.num - parsedB.num;
+        }
+
+        // 2. Nếu phần số chính giống nhau, so sánh phần thập phân (vd: 9.3 trước 9.4)
+        if (parsedA.decimal !== parsedB.decimal) {
+            return parsedA.decimal - parsedB.decimal;
+        }
+
+        // 3. Nếu cả số và thập phân giống nhau, so sánh phần hậu tố chữ-số (vd: 10A trước 10B, 11B1 trước 11B2)
+        // Đây là nơi mà "A" sẽ đứng trước "B" và "B1" trước "B2"
+        return parsedA.suffix.localeCompare(parsedB.suffix);
+    }
+
 
     // Hàm tìm kiếm giáo viên và hiển thị kết quả
     btnSearchTeacher.addEventListener('click', () => {
@@ -602,7 +664,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 day: days[dIdx], // Chuyển chỉ số ngày thành tên ngày (Thứ 2, Thứ 3,...)
                                 period: periods[pIdx].time, // Lấy chuỗi thời gian từ mảng periods
                                 subject: lesson.subject,
-                                teacher: lesson.teacher
+                                teacher: lesson.teacher,
+                                className: extractClassName(lesson.subject) // Trích xuất tên lớp
                             });
                         }
                     });
@@ -610,18 +673,31 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Sắp xếp kết quả: Khối -> Ngày -> Tiết
+        // Sắp xếp kết quả:
+        // 1. Theo tên lớp (ví dụ: 9.3 trước 9.4, 10A trước 10B)
+        // 2. Theo tên môn học (theo bảng chữ cái)
+        // 3. Nếu cùng tên lớp và môn, sắp xếp theo Khối
+        // 4. Nếu cùng Khối, sắp xếp theo Ngày
+        // 5. Nếu cùng Ngày, sắp xếp theo Tiết
         results.sort((a, b) => {
-            // Sắp xếp theo khối (vd: Khối 6, Khối 7, ...)
+            // 1. Sắp xếp theo tên lớp (sử dụng hàm compareClassNames)
+            const classNameOrder = compareClassNames(a.className, b.className);
+            if (classNameOrder !== 0) return classNameOrder;
+
+            // 2. Sắp xếp theo tên môn học (theo bảng chữ cái)
+            const subjectOrder = a.subject.localeCompare(b.subject);
+            if (subjectOrder !== 0) return subjectOrder;
+
+            // 3. Sắp xếp theo khối (vd: Khối 6, Khối 7, ...)
             const khoiNumA = parseInt(a.khoi.replace('Khối ', ''));
             const khoiNumB = parseInt(b.khoi.replace('Khối ', ''));
             if (khoiNumA !== khoiNumB) return khoiNumA - khoiNumB;
 
-            // Sắp xếp theo ngày (Thứ 2 đến CN)
+            // 4. Sắp xếp theo ngày (Thứ 2 đến CN)
             const dayOrder = days.indexOf(a.day) - days.indexOf(b.day);
             if (dayOrder !== 0) return dayOrder;
 
-            // Sắp xếp theo tiết (thời gian) - dựa vào thứ tự trong mảng periods
+            // 5. Sắp xếp theo tiết (thời gian) - dựa vào thứ tự trong mảng periods
             const periodOrderA = periods.findIndex(p => p.time === a.period);
             const periodOrderB = periods.findIndex(p => p.time === b.period);
             return periodOrderA - periodOrderB;
@@ -632,11 +708,41 @@ document.addEventListener('DOMContentLoaded', () => {
         totalTeacherClassesCountSpan.textContent = foundClassesCount;
 
         if (results.length > 0) {
-            results.forEach(item => {
-                const li = document.createElement('li');
-                li.innerHTML = `<strong>${item.subject}</strong> (${item.teacher}) - ${item.khoi} - ${item.day} (${item.period})`;
-                teacherClassesList.appendChild(li);
+            // Nhóm các lớp cùng tên môn và tên lớp (ví dụ: Văn 9.3) để đánh số thứ tự
+            const groupedBySubjectAndClassName = results.reduce((acc, item) => {
+                // Sử dụng kết hợp môn học và tên lớp để tạo key nhóm
+                // Chúng ta sẽ sắp xếp các key này sau đó
+                const key = `${item.subject}@@@${item.className}`; // Sử dụng ký tự đặc biệt để đảm bảo key duy nhất
+                if (!acc[key]) {
+                    acc[key] = [];
+                }
+                acc[key].push(item);
+                return acc;
+            }, {});
+
+            // Duyệt qua các nhóm đã sắp xếp theo thứ tự
+            const sortedGroupKeys = Object.keys(groupedBySubjectAndClassName).sort((keyA, keyB) => {
+                // Tách subject và className từ key để sắp xếp lại theo logic tổng thể
+                const [subjectA, classNameA] = keyA.split('@@@');
+                const [subjectB, classNameB] = keyB.split('@@@');
+
+                const classNameOrder = compareClassNames(classNameA, classNameB);
+                if (classNameOrder !== 0) return classNameOrder;
+
+                return subjectA.localeCompare(subjectB);
             });
+
+            sortedGroupKeys.forEach(key => {
+                const classesInGroup = groupedBySubjectAndClassName[key];
+                classesInGroup.forEach((item, index) => {
+                    const li = document.createElement('li');
+                    // Hiển thị số thứ tự nếu có nhiều hơn 1 lớp trong cùng nhóm subject/className
+                    const orderPrefix = classesInGroup.length > 1 ? `(${index + 1}) ` : '';
+                    li.innerHTML = `${orderPrefix}<strong>${item.subject}</strong> (${item.teacher}) - ${item.khoi} - ${item.day} (${item.period})`;
+                    teacherClassesList.appendChild(li);
+                });
+            });
+
         } else {
             const li = document.createElement('li');
             li.textContent = `Không tìm thấy lớp nào cho giáo viên "${searchTeacherName}".`;
